@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-chi/jwtauth/v5"
+	"go-market/cmd/gophermart/Config"
 	"go-market/internal/gophermart"
 	"go-market/internal/gophermart/data/database"
 	"go-market/internal/gophermart/data/dbrepository"
@@ -17,23 +18,22 @@ import (
 	"log"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	logger, err := logging.NewZapLogger(zapcore.DebugLevel)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cfg := gophermart.Config{
-		ServerAddress:   "localhost:8080",
-		ShutdownTimeout: time.Second * 5,
-	}
-
 	dbFactory := database.NewPgxDatabaseFactory(
 		database.Config{
-			ConnectionString: "",
+			ConnectionString: cfg.DB.ConnectionString,
 		},
 	)
 	storage, err := pgxstorage.New(dbFactory)
@@ -43,13 +43,13 @@ func main() {
 	repository := dbrepository.New(storage, logger)
 	transactionManager := pgxstorage.NewTransactionsManager(storage)
 
-	tokenAuth := jwtauth.New("HS256", []byte("secret"), nil)
-	tokenFactory := jwtfactory.New(tokenAuth, time.Second*30)
+	tokenAuth := jwtauth.New(cfg.JWTConfig.Algorithm, []byte(cfg.JWTConfig.Secret), nil)
+	tokenFactory := jwtfactory.New(tokenAuth, cfg.JWTConfig.ExpirationTime)
 
 	registrationService := service.NewRegistration(repository, transactionManager, tokenFactory)
 	loginService := service.NewLogin(repository, transactionManager, tokenFactory)
 
-	server := gophermart.NewServer(cfg, registrationService, loginService, logger)
+	server := gophermart.NewServer(cfg.Server, registrationService, loginService, logger)
 
 	rootCtx, cancelCtx := signal.NotifyContext(
 		context.Background(),
@@ -61,14 +61,14 @@ func main() {
 	)
 	defer cancelCtx()
 
-	if err := run(rootCtx, &cfg, server, logger); err != nil {
+	if err := run(rootCtx, cfg, server, logger); err != nil {
 		logger.ErrorCtx(rootCtx, "Server shutdown with error", zap.Error(err))
 	} else {
 		logger.InfoCtx(rootCtx, "Server shutdown gracefully")
 	}
 }
 
-func run(rootCtx context.Context, cfg *gophermart.Config, server *gophermart.Server, logger *logging.ZapLogger) error {
+func run(rootCtx context.Context, cfg *config.Config, server *gophermart.Server, logger *logging.ZapLogger) error {
 	g, ctx := errgroup.WithContext(rootCtx)
 
 	context.AfterFunc(ctx, func() {

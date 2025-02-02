@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"go-market/internal/gophermart/handlers"
 	"go-market/internal/gophermart/middleware"
 	"go-market/pkg/logging"
@@ -19,6 +20,7 @@ type Server struct {
 
 func NewServer(
 	cfg Config,
+	tokenAuth *jwtauth.JWTAuth,
 	registrationService handlers.RegistrationService,
 	authorizationService handlers.AuthorizationService,
 	logger *logging.ZapLogger,
@@ -26,6 +28,7 @@ func NewServer(
 	srv := &http.Server{
 		Addr: cfg.ServerAddress,
 		Handler: createMux(
+			tokenAuth,
 			registrationService,
 			authorizationService,
 			logger,
@@ -58,6 +61,7 @@ func (s *Server) Shutdown() error {
 }
 
 func createMux(
+	tokenAuth *jwtauth.JWTAuth,
 	registrationService handlers.RegistrationService,
 	authorizationService handlers.AuthorizationService,
 	logger *logging.ZapLogger,
@@ -65,6 +69,7 @@ func createMux(
 
 	registrationHandler := handlers.NewRegisterHandler(registrationService, logger)
 	authorizationHandler := handlers.NewAuthorizationHandler(authorizationService, logger)
+	orderLoadingHandler := handlers.NewOrderLoadingHandler(logger)
 
 	loggerContextMiddleware := middleware.NewLoggerContext()
 
@@ -74,6 +79,12 @@ func createMux(
 	router.Route("/api/user/", func(router chi.Router) {
 		router.Post("/register", registrationHandler.ServeHTTP)
 		router.Post("/login", authorizationHandler.ServeHTTP)
+		router.With(
+			jwtauth.Verifier(tokenAuth),
+			jwtauth.Authenticator(tokenAuth),
+		).Route("/", func(router chi.Router) {
+			router.Post("/orders", orderLoadingHandler.ServeHTTP)
+		})
 	})
 
 	return router

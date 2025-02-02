@@ -49,7 +49,7 @@ func main() {
 	registrationService := service.NewRegistration(repository, transactionManager, tokenFactory)
 	loginService := service.NewLogin(repository, transactionManager, tokenFactory)
 
-	server := gophermart.NewServer(cfg.Server, registrationService, loginService, logger)
+	server := gophermart.NewServer(cfg.Server, tokenAuth, registrationService, loginService, logger)
 
 	rootCtx, cancelCtx := signal.NotifyContext(
 		context.Background(),

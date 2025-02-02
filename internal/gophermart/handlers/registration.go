@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"go-market/internal/gophermart/services"
+	"go-market/pkg/logging"
 	"go.uber.org/zap"
 	"net/http"
 )
 
 type RegisterHandler struct {
 	service RegistrationService
-	logger  *zap.Logger
+	logger  *logging.ZapLogger
 }
 
 type RegistrationInput struct {
@@ -23,7 +24,7 @@ type RegistrationService interface {
 	Register(ctx context.Context, login string, password string) (string, error)
 }
 
-func NewRegisterHandler(service RegistrationService, logger *zap.Logger) *RegisterHandler {
+func NewRegisterHandler(service RegistrationService, logger *logging.ZapLogger) *RegisterHandler {
 	return &RegisterHandler{
 		service: service,
 		logger:  logger,
@@ -31,12 +32,11 @@ func NewRegisterHandler(service RegistrationService, logger *zap.Logger) *Regist
 }
 
 func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	requestLogger := newRequestLogger(h.logger, r)
-	defer closeBody(r.Body, requestLogger)
+	defer closeBody(r.Context(), r.Body, h.logger)
 
 	input, err := decodeJSON[RegistrationInput](r.Body)
 	if err != nil {
-		requestLogger.Debug("error decoding input", zap.Error(err))
+		h.logger.DebugCtx(r.Context(), "input decoding error", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -45,11 +45,11 @@ func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrLoginTaken):
-			requestLogger.Debug("login is already taken", zap.String("login", input.Login))
+			h.logger.DebugCtx(r.Context(), "service error", zap.Error(err), zap.String("login", input.Login))
 			w.WriteHeader(http.StatusConflict)
 			return
 		default:
-			requestLogger.Error("registration handler error", zap.Error(err), zap.Any("input", input))
+			h.logger.ErrorCtx(r.Context(), "service error", zap.Error(err), zap.Any("input", input))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

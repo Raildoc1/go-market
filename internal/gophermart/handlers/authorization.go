@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"go-market/internal/gophermart/services"
+	"go-market/pkg/logging"
 	"go.uber.org/zap"
 	"net/http"
 )
 
 type AuthorizationHandler struct {
 	service AuthorizationService
-	logger  *zap.Logger
+	logger  *logging.ZapLogger
 }
 
 type AuthorizationInput struct {
@@ -23,7 +24,7 @@ type AuthorizationService interface {
 	Login(ctx context.Context, login string, password string) (string, error)
 }
 
-func NewAuthorizationHandler(service AuthorizationService, logger *zap.Logger) *AuthorizationHandler {
+func NewAuthorizationHandler(service AuthorizationService, logger *logging.ZapLogger) *AuthorizationHandler {
 	return &AuthorizationHandler{
 		service: service,
 		logger:  logger,
@@ -31,12 +32,11 @@ func NewAuthorizationHandler(service AuthorizationService, logger *zap.Logger) *
 }
 
 func (h *AuthorizationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	requestLogger := newRequestLogger(h.logger, r)
-	defer closeBody(r.Body, requestLogger)
+	defer closeBody(r.Context(), r.Body, h.logger)
 
 	input, err := decodeJSON[RegistrationInput](r.Body)
 	if err != nil {
-		requestLogger.Debug("error decoding input", zap.Error(err))
+		h.logger.DebugCtx(r.Context(), "input decoding error", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -45,11 +45,11 @@ func (h *AuthorizationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrInvalidCredentials):
-			requestLogger.Debug("invalid credentials", zap.String("login", input.Login))
+			h.logger.DebugCtx(r.Context(), "service error", zap.Error(err), zap.Any("input", input))
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		default:
-			requestLogger.Error("authorization handler error", zap.Error(err), zap.Any("input", input))
+			h.logger.ErrorCtx(r.Context(), "service error", zap.Error(err), zap.Any("input", input))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

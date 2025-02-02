@@ -1,26 +1,18 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
-	"io"
-	"net/http"
-
+	"go-market/pkg/logging"
 	"go.uber.org/zap"
+	"io"
 )
 
-func closeBody(body io.ReadCloser, logger *zap.Logger) {
+func closeBody(ctx context.Context, body io.ReadCloser, logger *logging.ZapLogger) {
 	err := body.Close()
 	if err != nil {
-		logger.Error("failed to close body", zap.Error(err))
+		logger.ErrorCtx(ctx, "failed to close body", zap.Error(err))
 	}
-}
-
-func newRequestLogger(logger *zap.Logger, r *http.Request) *zap.Logger {
-	return logger.With(
-		zap.String("path", r.URL.Path),
-		zap.String("method", r.Method),
-		zap.String("remote-addr", r.RemoteAddr),
-	)
 }
 
 func decodeJSON[T any](r io.Reader) (T, error) {

@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"go-market/internal/gophermart/handlers"
-	"go.uber.org/zap"
+	"go-market/internal/gophermart/middleware"
+	"go-market/pkg/logging"
 	"net/http"
 )
 
 type Server struct {
-	logger     *zap.Logger
+	logger     *logging.ZapLogger
 	httpServer *http.Server
 	cfg        Config
 }
@@ -20,7 +21,7 @@ func New(
 	cfg Config,
 	registrationService handlers.RegistrationService,
 	authorizationService handlers.AuthorizationService,
-	logger *zap.Logger,
+	logger *logging.ZapLogger,
 ) *Server {
 	srv := &http.Server{
 		Addr: cfg.ServerAddress,
@@ -59,14 +60,17 @@ func (s *Server) Shutdown() error {
 func createMux(
 	registrationService handlers.RegistrationService,
 	authorizationService handlers.AuthorizationService,
-	logger *zap.Logger,
+	logger *logging.ZapLogger,
 ) *chi.Mux {
 
 	registrationHandler := handlers.NewRegisterHandler(registrationService, logger)
 	authorizationHandler := handlers.NewAuthorizationHandler(authorizationService, logger)
 
+	loggerContextMiddleware := middleware.NewLoggerContext()
+
 	router := chi.NewRouter()
 
+	router.Use(loggerContextMiddleware.CreateHandler)
 	router.Route("/api/user/", func(router chi.Router) {
 		router.Post("/register", registrationHandler.ServeHTTP)
 		router.Post("/login", authorizationHandler.ServeHTTP)

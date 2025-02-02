@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-market/internal/gophermart/services"
+	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go.uber.org/zap"
 	"net/http"
@@ -44,7 +44,7 @@ func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	tkn, err := h.service.Register(r.Context(), input.Login, input.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrLoginTaken):
+		case errors.Is(err, service.ErrLoginTaken):
 			h.logger.DebugCtx(r.Context(), "service error", zap.Error(err), zap.String("login", input.Login))
 			w.WriteHeader(http.StatusConflict)
 			return

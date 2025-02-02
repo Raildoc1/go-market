@@ -17,7 +17,7 @@ type Server struct {
 	cfg        Config
 }
 
-func New(
+func NewServer(
 	cfg Config,
 	registrationService handlers.RegistrationService,
 	authorizationService handlers.AuthorizationService,

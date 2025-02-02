@@ -1,0 +1,12 @@
+BEGIN TRANSACTION;
+
+CREATE EXTENSION pgcrypto;
+
+CREATE TABLE users
+(
+    id       SERIAL PRIMARY KEY,
+    login    VARCHAR(32)  NOT NULL UNIQUE,
+    password VARCHAR(128) NOT NULL
+);
+
+COMMIT;

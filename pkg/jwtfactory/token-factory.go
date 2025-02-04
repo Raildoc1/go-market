@@ -17,12 +17,14 @@ func New(tokenAuth *jwtauth.JWTAuth, tokenExpirationTime time.Duration) *TokenFa
 	}
 }
 
-func (tf *TokenFactory) Generate(login string) (string, error) {
+func (tf *TokenFactory) Generate(extraClaims map[string]string) (string, error) {
 	timeNow := time.Now()
 	claims := map[string]any{
-		"login": login,
-		"exp":   timeNow.Add(tf.tokenExpirationTime).Unix(),
-		"iat":   timeNow.Unix(),
+		"exp": timeNow.Add(tf.tokenExpirationTime).Unix(),
+		"iat": timeNow.Unix(),
+	}
+	for k, v := range extraClaims {
+		claims[k] = v
 	}
 	_, tokenString, err := tf.tokenAuth.Encode(claims)
 	return tokenString, err

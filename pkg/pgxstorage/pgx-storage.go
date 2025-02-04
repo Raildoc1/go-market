@@ -78,6 +78,14 @@ func (s *DBStorage) Query(ctx context.Context, query string, args ...any) (pgx.R
 	return tx.Query(ctx, query, args...) //nolint:wrapcheck // unnecessary
 }
 
+func (s *DBStorage) QueryValues(ctx context.Context, query string, args []any, dest []any) error {
+	row, err := s.QueryRow(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	return row.Scan(dest...)
+}
+
 func (s *DBStorage) withTransaction(ctx context.Context) (context.Context, pgx.Tx, error) {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	if err != nil {

@@ -9,4 +9,10 @@ CREATE TABLE users
     password VARCHAR(128) NOT NULL
 );
 
+CREATE TABLE orders
+(
+    number VARCHAR(1024) PRIMARY KEY,
+    status VARCHAR(32)
+);
+
 COMMIT;

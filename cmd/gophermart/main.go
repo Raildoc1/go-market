@@ -46,10 +46,10 @@ func main() {
 	tokenAuth := jwtauth.New(cfg.JWTConfig.Algorithm, []byte(cfg.JWTConfig.Secret), nil)
 	tokenFactory := jwtfactory.New(tokenAuth, cfg.JWTConfig.ExpirationTime)
 
-	registrationService := service.NewRegistration(repository, transactionManager, tokenFactory)
-	loginService := service.NewLogin(repository, transactionManager, tokenFactory)
+	authorization := service.NewAuthorization(repository, transactionManager, tokenFactory)
+	orders := service.NewOrders(transactionManager, repository)
 
-	server := gophermart.NewServer(cfg.Server, tokenAuth, registrationService, loginService, logger)
+	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, authorization, orders, logger)
 
 	rootCtx, cancelCtx := signal.NotifyContext(
 		context.Background(),

@@ -23,6 +23,7 @@ func NewServer(
 	tokenAuth *jwtauth.JWTAuth,
 	registrationService handlers.RegistrationService,
 	authorizationService handlers.AuthorizationService,
+	ordersLoadingService handlers.OrderLoadingService,
 	logger *logging.ZapLogger,
 ) *Server {
 	srv := &http.Server{
@@ -31,6 +32,7 @@ func NewServer(
 			tokenAuth,
 			registrationService,
 			authorizationService,
+			ordersLoadingService,
 			logger,
 		),
 	}
@@ -64,18 +66,21 @@ func createMux(
 	tokenAuth *jwtauth.JWTAuth,
 	registrationService handlers.RegistrationService,
 	authorizationService handlers.AuthorizationService,
+	ordersLoadingService handlers.OrderLoadingService,
 	logger *logging.ZapLogger,
 ) *chi.Mux {
 
 	registrationHandler := handlers.NewRegisterHandler(registrationService, logger)
 	authorizationHandler := handlers.NewAuthorizationHandler(authorizationService, logger)
-	orderLoadingHandler := handlers.NewOrderLoadingHandler(logger)
+	orderLoadingHandler := handlers.NewOrderLoadingHandler(ordersLoadingService, logger)
 
 	loggerContextMiddleware := middleware.NewLoggerContext()
+	panicRecover := middleware.NewPanicRecover(logger)
 
 	router := chi.NewRouter()
 
 	router.Use(loggerContextMiddleware.CreateHandler)
+	router.Use(panicRecover.CreateHandler)
 	router.Route("/api/user/", func(router chi.Router) {
 		router.Post("/register", registrationHandler.ServeHTTP)
 		router.Post("/login", authorizationHandler.ServeHTTP)

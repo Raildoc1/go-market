@@ -80,8 +80,16 @@ func (db *DBRepository) ValidateUser(ctx context.Context, login, password string
 //go:embed sql/insert_order.sql
 var insertOrderQuery string
 
-func (db *DBRepository) InsertOrder(ctx context.Context, orderNumber *big.Int, userId int, status data.Status) error {
-	_, err := db.storage.Exec(ctx, insertOrderQuery, orderNumber.String(), string(status), userId)
+func (db *DBRepository) InsertOrder(ctx context.Context, order data.Order) error {
+	_, err := db.storage.Exec(
+		ctx,
+		insertOrderQuery,
+		order.OrderNumber,
+		string(order.Status),
+		order.UserId,
+		order.Accrual,
+		order.UploadTime,
+	)
 	if err != nil {
 		return handleSQLError(err)
 	}
@@ -99,18 +107,20 @@ func (db *DBRepository) GetOrderOwner(ctx context.Context, orderNumber *big.Int)
 	return userId, nil
 }
 
-func (db *DBRepository) GetOrders(ctx context.Context, limit int, allowedStatuses ...data.Status) ([]string, error) {
-	query := "SELECT number FROM orders"
+func (db *DBRepository) GetOrders(ctx context.Context, limit int, allowedStatuses ...data.Status) ([]data.Order, error) {
+	query := "SELECT number, user_id, accrual, upload_time, status FROM orders"
 	if len(allowedStatuses) > 0 {
 		query += fmt.Sprintf(" WHERE status IN (%s)", formatParams(2, len(allowedStatuses)))
 	}
 	if limit > 0 {
 		query += " LIMIT $1"
 	}
-	args := make([]any, len(allowedStatuses)+1)
-	args[0] = limit
-	for i, allowedStatus := range allowedStatuses {
-		args[i+1] = string(allowedStatus)
+	args := make([]any, 0)
+	if limit > 0 {
+		args = append(args, limit)
+	}
+	for _, allowedStatus := range allowedStatuses {
+		args = append(args, string(allowedStatus))
 	}
 	rows, err := db.storage.Query(ctx, query, args...)
 	if err != nil {
@@ -121,20 +131,26 @@ func (db *DBRepository) GetOrders(ctx context.Context, limit int, allowedStatuse
 	if err = rows.Err(); err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
-			return make([]string, 0), nil
+			return make([]data.Order, 0), nil
 		default:
 			return nil, handleSQLError(err)
 		}
 	}
 
-	result := make([]string, 0)
+	result := make([]data.Order, 0)
 	for rows.Next() {
-		var orderNumber string
-		err := rows.Scan(&orderNumber)
+		var order data.Order
+		err := rows.Scan(
+			&order.OrderNumber,
+			&order.UserId,
+			&order.Accrual,
+			&order.UploadTime,
+			&order.Status,
+		)
 		if err != nil {
 			return nil, handleSQLError(err)
 		}
-		result = append(result, orderNumber)
+		result = append(result, order)
 	}
 	return result, nil
 }
@@ -178,8 +194,13 @@ func (db *DBRepository) GetOrder(ctx context.Context, orderNumber string) (userI
 //go:embed sql/update_order_status.sql
 var updateOrderStatusQuery string
 
-func (db *DBRepository) SetOrderStatus(ctx context.Context, orderNumber string, status data.Status) error {
-	_, err := db.storage.Exec(ctx, updateOrderStatusQuery, orderNumber, status)
+func (db *DBRepository) SetOrderStatus(
+	ctx context.Context,
+	orderNumber string,
+	accrual int64,
+	status data.Status,
+) error {
+	_, err := db.storage.Exec(ctx, updateOrderStatusQuery, orderNumber, status, accrual)
 	if err != nil {
 		return handleSQLError(err)
 	}

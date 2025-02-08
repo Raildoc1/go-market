@@ -1,4 +1,4 @@
-package common
+package accrualsystemprotocol
 
 const (
 	Registered OrderStatus = "REGISTERED"
@@ -10,7 +10,7 @@ const (
 type OrderStatus string
 
 type Order struct {
-	Number string      `json:"order"`
-	Status OrderStatus `json:"status"`
-	Points int64       `json:"accrual"`
+	Number  string      `json:"order"`
+	Status  OrderStatus `json:"status"`
+	Accrual int64       `json:"accrual"`
 }

@@ -1,5 +1,9 @@
 package data
 
+import (
+	"time"
+)
+
 type Status string
 
 const (
@@ -9,3 +13,11 @@ const (
 	ProcessedStatus  = Status("PROCESSED")
 	InvalidStatus    = Status("INVALID")
 )
+
+type Order struct {
+	OrderNumber string
+	UserId      int
+	Accrual     int64
+	Status      Status
+	UploadTime  time.Time
+}

@@ -18,21 +18,29 @@ type Server struct {
 	cfg        Config
 }
 
+type AuthorizationService interface {
+	handlers.RegistrationService
+	handlers.AuthorizationService
+}
+
+type OrdersService interface {
+	handlers.OrderLoadingService
+	handlers.OrderGettingService
+}
+
 func NewServer(
 	cfg Config,
 	tokenAuth *jwtauth.JWTAuth,
-	registrationService handlers.RegistrationService,
-	authorizationService handlers.AuthorizationService,
-	ordersLoadingService handlers.OrderLoadingService,
+	authorizationService AuthorizationService,
+	ordersService OrdersService,
 	logger *logging.ZapLogger,
 ) *Server {
 	srv := &http.Server{
 		Addr: cfg.ServerAddress,
 		Handler: createMux(
 			tokenAuth,
-			registrationService,
 			authorizationService,
-			ordersLoadingService,
+			ordersService,
 			logger,
 		),
 	}
@@ -64,15 +72,15 @@ func (s *Server) Shutdown() error {
 
 func createMux(
 	tokenAuth *jwtauth.JWTAuth,
-	registrationService handlers.RegistrationService,
-	authorizationService handlers.AuthorizationService,
-	ordersLoadingService handlers.OrderLoadingService,
+	authorizationService AuthorizationService,
+	ordersService OrdersService,
 	logger *logging.ZapLogger,
 ) *chi.Mux {
 
-	registrationHandler := handlers.NewRegisterHandler(registrationService, logger)
+	registrationHandler := handlers.NewRegisterHandler(authorizationService, logger)
 	authorizationHandler := handlers.NewAuthorizationHandler(authorizationService, logger)
-	orderLoadingHandler := handlers.NewOrderLoadingHandler(ordersLoadingService, logger)
+	orderLoadingHandler := handlers.NewOrderLoadingHandler(ordersService, logger)
+	gettingHandler := handlers.NewGettingHandler(ordersService, logger)
 
 	loggerContextMiddleware := middleware.NewLoggerContext()
 	panicRecover := middleware.NewPanicRecover(logger)
@@ -89,6 +97,7 @@ func createMux(
 			jwtauth.Authenticator(tokenAuth),
 		).Route("/", func(router chi.Router) {
 			router.Post("/orders", orderLoadingHandler.ServeHTTP)
+			router.Get("/orders", gettingHandler.ServeHTTP)
 		})
 	})
 

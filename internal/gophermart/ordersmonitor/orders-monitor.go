@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-market/internal/common"
+	"go-market/internal/common/accrualsystemprotocol"
 	"go-market/internal/gophermart/accrualsystem"
 	"go-market/internal/gophermart/data"
 	"go-market/pkg/logging"
@@ -19,9 +19,9 @@ type TransactionManager interface {
 }
 
 type OrdersRepository interface {
-	GetOrders(ctx context.Context, limit int, allowedStatuses ...data.Status) ([]string, error)
+	GetOrders(ctx context.Context, limit int, allowedStatuses ...data.Status) ([]data.Order, error)
 	GetOrder(ctx context.Context, orderNumber string) (userId int, status data.Status, err error)
-	SetOrderStatus(ctx context.Context, orderNumber string, status data.Status) error
+	SetOrderStatus(ctx context.Context, orderNumber string, accrual int64, status data.Status) error
 }
 
 type BonusPointsRepository interface {
@@ -30,7 +30,7 @@ type BonusPointsRepository interface {
 }
 
 type AccrualSystem interface {
-	GetOrderStatus(ctx context.Context, orderNumber string) (common.Order, error)
+	GetOrderStatus(ctx context.Context, orderNumber string) (accrualsystemprotocol.Order, error)
 }
 
 type Config struct {
@@ -132,7 +132,8 @@ func (om *OrdersMonitor) tick(orderNumbersChan chan<- string) error {
 	if len(orderNumbers) == 0 {
 		return nil
 	}
-	for _, orderNumber := range orderNumbers {
+	for _, order := range orderNumbers {
+		orderNumber := order.OrderNumber
 		if om.processingOrders.Contains(orderNumber) {
 			continue
 		}
@@ -169,25 +170,34 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 		if err != nil {
 			switch {
 			case errors.Is(err, accrualsystem.ErrNoOrderFound):
-				return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, data.InvalidStatus)
+				return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, 0, data.InvalidStatus)
 			default:
 				return fmt.Errorf("failed to get remote order status: %w", err)
 			}
 		}
 		switch remoteOrder.Status {
-		case common.Invalid:
-			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, data.InvalidStatus)
-		case common.Registered:
+		case accrualsystemprotocol.Invalid:
+			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, 0, data.InvalidStatus)
+		case accrualsystemprotocol.Registered:
 			fallthrough
-		case common.Processing:
-			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, data.ProcessingStatus)
-		case common.Processed:
+		case accrualsystemprotocol.Processing:
+			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, 0, data.ProcessingStatus)
+		case accrualsystemprotocol.Processed:
 			currentPoints, err := om.bonusPointsRepository.GetBonusPoints(ctx, userId)
 			if err != nil {
 				return fmt.Errorf("failed to get current bonus points: %w", err)
 			}
-			err = om.bonusPointsRepository.SetBonusPoints(ctx, userId, currentPoints+remoteOrder.Points)
-			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, data.ProcessedStatus)
+			err = om.bonusPointsRepository.SetBonusPoints(
+				ctx,
+				userId,
+				currentPoints+remoteOrder.Accrual,
+			)
+			return om.orderStatusRepository.SetOrderStatus(
+				ctx,
+				orderNumber,
+				remoteOrder.Accrual,
+				data.ProcessedStatus,
+			)
 		}
 		return nil
 	})

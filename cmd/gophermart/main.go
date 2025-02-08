@@ -52,7 +52,7 @@ func main() {
 	orders := service.NewOrders(transactionManager, repository)
 	accrualSystem := accrualsystem.NewAccrualSystem(cfg.AccrualSystem)
 
-	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, authorization, orders, logger)
+	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, orders, logger)
 	ordersMonitor := ordersmonitor.NewOrdersMonitor(cfg.OrdersMonitor, repository, repository, transactionManager, accrualSystem, logger)
 
 	rootCtx, cancelCtx := signal.NotifyContext(

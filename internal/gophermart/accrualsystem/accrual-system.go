@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"go-market/internal/common"
+	"go-market/internal/common/accrualsystemprotocol"
 )
 
 var (
@@ -26,7 +26,7 @@ func NewAccrualSystem(cfg Config) *AccrualSystem {
 	}
 }
 
-func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string) (common.Order, error) {
+func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string) (accrualsystemprotocol.Order, error) {
 	url := fmt.Sprintf("http://%s/api/orders/{number}", as.cfg.ServerAddress)
 	resp, err := resty.
 		New().
@@ -35,20 +35,20 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 		SetQueryParam("number", orderNumber).
 		Get(url)
 	if err != nil {
-		return common.Order{}, err
+		return accrualsystemprotocol.Order{}, err
 	}
 	statusCode := resp.StatusCode()
 	switch statusCode {
 	case 204:
-		return common.Order{}, ErrNoOrderFound
+		return accrualsystemprotocol.Order{}, ErrNoOrderFound
 	case 200:
-		res := common.Order{}
+		res := accrualsystemprotocol.Order{}
 		err := json.Unmarshal(resp.Body(), &res)
 		if err != nil {
-			return common.Order{}, err
+			return accrualsystemprotocol.Order{}, err
 		}
 		return res, nil
 	default:
-		return common.Order{}, fmt.Errorf("unexpected status code %v", statusCode)
+		return accrualsystemprotocol.Order{}, fmt.Errorf("unexpected status code %v", statusCode)
 	}
 }

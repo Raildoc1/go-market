@@ -3,7 +3,9 @@ package config
 import (
 	"flag"
 	"go-market/internal/gophermart"
+	"go-market/internal/gophermart/accrualsystem"
 	"go-market/internal/gophermart/data/database"
+	"go-market/internal/gophermart/ordersmonitor"
 	"os"
 	"time"
 )
@@ -11,10 +13,10 @@ import (
 const (
 	serverAddressFlag           = "a"
 	serverAddressEnv            = "RUN_ADDRESS"
-	serverAddressDefault        = "localhost:8080"
+	serverAddressDefault        = "localhost:8081"
 	accrualSystemAddressFlag    = "r"
 	accrualSystemAddressEnv     = "ACCRUAL_SYSTEM_ADDRESS"
-	accrualSystemAddressDefault = "localhost:8081"
+	accrualSystemAddressDefault = "localhost:8080"
 	dbConnectionStringFlag      = "d"
 	dbConnectionStringEnv       = "DATABASE_URI"
 	dbConnectionStringDefault   = ""
@@ -25,6 +27,8 @@ type Config struct {
 	JWTConfig       JWTConfig
 	DB              database.Config
 	ShutdownTimeout time.Duration
+	OrdersMonitor   ordersmonitor.Config
+	AccrualSystem   accrualsystem.Config
 }
 
 type JWTConfig struct {
@@ -80,5 +84,13 @@ func Load() (*Config, error) {
 			ConnectionString: *dbConnectionString,
 		},
 		ShutdownTimeout: time.Second * 5,
+		OrdersMonitor: ordersmonitor.Config{
+			TickPeriod:        time.Second * 3,
+			WorkersCount:      5,
+			TasksBufferLength: 10,
+		},
+		AccrualSystem: accrualsystem.Config{
+			ServerAddress: "localhost:8080",
+		},
 	}, nil
 }

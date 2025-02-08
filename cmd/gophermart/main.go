@@ -6,8 +6,10 @@ import (
 	"github.com/go-chi/jwtauth/v5"
 	"go-market/cmd/gophermart/Config"
 	"go-market/internal/gophermart"
+	"go-market/internal/gophermart/accrualsystem"
 	"go-market/internal/gophermart/data/database"
 	"go-market/internal/gophermart/data/dbrepository"
+	"go-market/internal/gophermart/ordersmonitor"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/jwtfactory"
 	"go-market/pkg/logging"
@@ -48,8 +50,10 @@ func main() {
 
 	authorization := service.NewAuthorization(repository, transactionManager, tokenFactory)
 	orders := service.NewOrders(transactionManager, repository)
+	accrualSystem := accrualsystem.NewAccrualSystem(cfg.AccrualSystem)
 
 	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, authorization, orders, logger)
+	ordersMonitor := ordersmonitor.NewOrdersMonitor(cfg.OrdersMonitor, repository, repository, transactionManager, accrualSystem, logger)
 
 	rootCtx, cancelCtx := signal.NotifyContext(
 		context.Background(),
@@ -61,14 +65,20 @@ func main() {
 	)
 	defer cancelCtx()
 
-	if err := run(rootCtx, cfg, server, logger); err != nil {
+	if err := run(rootCtx, cfg, server, ordersMonitor, logger); err != nil {
 		logger.ErrorCtx(rootCtx, "Server shutdown with error", zap.Error(err))
 	} else {
 		logger.InfoCtx(rootCtx, "Server shutdown gracefully")
 	}
 }
 
-func run(rootCtx context.Context, cfg *config.Config, server *gophermart.Server, logger *logging.ZapLogger) error {
+func run(
+	rootCtx context.Context,
+	cfg *config.Config,
+	server *gophermart.Server,
+	ordersMonitor *ordersmonitor.OrdersMonitor,
+	logger *logging.ZapLogger,
+) error {
 	g, ctx := errgroup.WithContext(rootCtx)
 
 	context.AfterFunc(ctx, func() {
@@ -92,6 +102,18 @@ func run(rootCtx context.Context, cfg *config.Config, server *gophermart.Server,
 		if err := server.Shutdown(); err != nil {
 			return fmt.Errorf("failed to shutdown server: %w", err)
 		}
+		return nil
+	})
+
+	g.Go(func() error {
+		ordersMonitor.Run()
+		return nil
+	})
+
+	g.Go(func() error {
+		defer logger.InfoCtx(ctx, "Shutting down orders monitor")
+		<-ctx.Done()
+		ordersMonitor.Stop()
 		return nil
 	})
 

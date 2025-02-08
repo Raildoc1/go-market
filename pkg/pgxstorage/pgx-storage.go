@@ -78,7 +78,7 @@ func (s *DBStorage) Query(ctx context.Context, query string, args ...any) (pgx.R
 	return tx.Query(ctx, query, args...) //nolint:wrapcheck // unnecessary
 }
 
-func (s *DBStorage) QueryValues(ctx context.Context, query string, args []any, dest []any) error {
+func (s *DBStorage) QueryValue(ctx context.Context, query string, args []any, dest []any) error {
 	row, err := s.QueryRow(ctx, query, args...)
 	if err != nil {
 		return err

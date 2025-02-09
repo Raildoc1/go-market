@@ -1,3 +1,3 @@
-SELECT points
+SELECT balance
 FROM users
 WHERE id = $1

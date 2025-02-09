@@ -25,8 +25,8 @@ type OrdersRepository interface {
 }
 
 type BonusPointsRepository interface {
-	GetBonusPoints(ctx context.Context, userId int) (int64, error)
-	SetBonusPoints(ctx context.Context, userId int, value int64) error
+	GetUserBalance(ctx context.Context, userId int) (int64, error)
+	SetUserBalance(ctx context.Context, userId int, value int64) error
 }
 
 type AccrualSystem interface {
@@ -183,11 +183,11 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 		case accrualsystemprotocol.Processing:
 			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, 0, data.ProcessingStatus)
 		case accrualsystemprotocol.Processed:
-			currentPoints, err := om.bonusPointsRepository.GetBonusPoints(ctx, userId)
+			currentPoints, err := om.bonusPointsRepository.GetUserBalance(ctx, userId)
 			if err != nil {
 				return fmt.Errorf("failed to get current bonus points: %w", err)
 			}
-			err = om.bonusPointsRepository.SetBonusPoints(
+			err = om.bonusPointsRepository.SetUserBalance(
 				ctx,
 				userId,
 				currentPoints+remoteOrder.Accrual,

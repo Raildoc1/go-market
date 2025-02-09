@@ -155,24 +155,24 @@ func (db *DBRepository) GetOrders(ctx context.Context, limit int, allowedStatuse
 	return result, nil
 }
 
-//go:embed sql/select_user_points.sql
-var selectUserPointsQuery string
+//go:embed sql/select_user_balance.sql
+var selectUserBalanceQuery string
 
-func (db *DBRepository) GetBonusPoints(ctx context.Context, userId int) (points int64, err error) {
+func (db *DBRepository) GetUserBalance(ctx context.Context, userId int) (points int64, err error) {
 	db.logger.DebugCtx(ctx, "getting points for user", zap.Int("user_id", userId))
-	err = db.storage.QueryValue(ctx, selectUserPointsQuery, []any{userId}, []any{&points})
+	err = db.storage.QueryValue(ctx, selectUserBalanceQuery, []any{userId}, []any{&points})
 	if err != nil {
 		return invalidPoints, handleSQLError(err)
 	}
 	return points, nil
 }
 
-//go:embed sql/update_user_points.sql
-var updateUserPointsQuery string
+//go:embed sql/update_user_balance.sql
+var updateUserBalanceQuery string
 
-func (db *DBRepository) SetBonusPoints(ctx context.Context, userId int, value int64) error {
+func (db *DBRepository) SetUserBalance(ctx context.Context, userId int, value int64) error {
 	db.logger.DebugCtx(ctx, "getting points for user", zap.Int("user_id", userId), zap.Int64("value", value))
-	_, err := db.storage.Exec(ctx, updateUserPointsQuery, userId, value)
+	_, err := db.storage.Exec(ctx, updateUserBalanceQuery, userId, value)
 	if err != nil {
 		return handleSQLError(err)
 	}

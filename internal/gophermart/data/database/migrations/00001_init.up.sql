@@ -11,8 +11,11 @@ CREATE TABLE users
 
 CREATE TABLE orders
 (
-    number VARCHAR(1024) PRIMARY KEY,
-    status VARCHAR(32)
+    number      VARCHAR(1024) PRIMARY KEY,
+    status      VARCHAR(32),
+    user_id     INTEGER,
+    upload_time TIMESTAMP,
+    accrual     BIGINT
 );
 
 COMMIT;

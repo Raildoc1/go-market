@@ -1,3 +1,3 @@
 UPDATE users
-SET points = $2
+SET balance = $2
 WHERE id = $1

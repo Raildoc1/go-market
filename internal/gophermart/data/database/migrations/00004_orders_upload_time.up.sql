@@ -1,7 +1,0 @@
-BEGIN TRANSACTION;
-
-ALTER TABLE orders
-    ADD COLUMN upload_time TIMESTAMP,
-    ADD COLUMN accrual     BIGINT;
-
-COMMIT;

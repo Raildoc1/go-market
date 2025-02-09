@@ -207,6 +207,21 @@ func (db *DBRepository) SetOrderStatus(
 	return nil
 }
 
+//go:embed sql/select_user_withdrawals_sum.sql
+var selectUserWithdrawalsSumQuery string
+
+func (db *DBRepository) GetAllUserWithdrawals(ctx context.Context, userId int) (value int64, err error) {
+	var t *int64
+	err = db.storage.QueryValue(ctx, selectUserWithdrawalsSumQuery, []any{userId}, []any{&t})
+	if err != nil {
+		return 0, handleSQLError(err)
+	}
+	if t == nil {
+		return 0, nil
+	}
+	return *t, nil
+}
+
 func handleSQLError(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {

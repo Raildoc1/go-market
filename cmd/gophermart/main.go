@@ -50,9 +50,10 @@ func main() {
 
 	authorization := service.NewAuthorization(repository, transactionManager, tokenFactory)
 	orders := service.NewOrders(transactionManager, repository)
+	wallet := service.NewWallet(transactionManager, repository)
 	accrualSystem := accrualsystem.NewAccrualSystem(cfg.AccrualSystem)
 
-	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, orders, logger)
+	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, orders, wallet, logger)
 	ordersMonitor := ordersmonitor.NewOrdersMonitor(cfg.OrdersMonitor, repository, repository, transactionManager, accrualSystem, logger)
 
 	rootCtx, cancelCtx := signal.NotifyContext(

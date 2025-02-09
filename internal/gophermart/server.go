@@ -28,11 +28,16 @@ type OrdersService interface {
 	handlers.OrderGettingService
 }
 
+type WalletService interface {
+	handlers.BalanceGettingService
+}
+
 func NewServer(
 	cfg Config,
 	tokenAuth *jwtauth.JWTAuth,
 	authorizationService AuthorizationService,
 	ordersService OrdersService,
+	walletService WalletService,
 	logger *logging.ZapLogger,
 ) *Server {
 	srv := &http.Server{
@@ -41,6 +46,7 @@ func NewServer(
 			tokenAuth,
 			authorizationService,
 			ordersService,
+			walletService,
 			logger,
 		),
 	}
@@ -74,13 +80,15 @@ func createMux(
 	tokenAuth *jwtauth.JWTAuth,
 	authorizationService AuthorizationService,
 	ordersService OrdersService,
+	walletService WalletService,
 	logger *logging.ZapLogger,
 ) *chi.Mux {
 
 	registrationHandler := handlers.NewRegisterHandler(authorizationService, logger)
 	authorizationHandler := handlers.NewAuthorizationHandler(authorizationService, logger)
 	orderLoadingHandler := handlers.NewOrderLoadingHandler(ordersService, logger)
-	gettingHandler := handlers.NewGettingHandler(ordersService, logger)
+	orderGettingHandler := handlers.NewOrderGettingHandler(ordersService, logger)
+	balanceGettingHandler := handlers.NewBalanceGettingHandler(walletService, logger)
 
 	loggerContextMiddleware := middleware.NewLoggerContext()
 	panicRecover := middleware.NewPanicRecover(logger)
@@ -97,7 +105,8 @@ func createMux(
 			jwtauth.Authenticator(tokenAuth),
 		).Route("/", func(router chi.Router) {
 			router.Post("/orders", orderLoadingHandler.ServeHTTP)
-			router.Get("/orders", gettingHandler.ServeHTTP)
+			router.Get("/orders", orderGettingHandler.ServeHTTP)
+			router.Get("/balance", balanceGettingHandler.ServeHTTP)
 		})
 	})
 

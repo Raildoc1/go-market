@@ -1,0 +1,63 @@
+package handlers
+
+import (
+	"context"
+	"encoding/json"
+	"go-market/internal/gophermart/service"
+	"go-market/pkg/logging"
+	"go.uber.org/zap"
+	"net/http"
+)
+
+type BalanceInfo struct {
+	Balance     int64 `json:"current"`
+	Withdrawals int64 `json:"withdrawn"`
+}
+
+type BalanceGettingHandler struct {
+	service BalanceGettingService
+	logger  *logging.ZapLogger
+}
+
+type BalanceGettingService interface {
+	GetUserBalanceInfo(ctx context.Context, userId int) (service.BalanceInfo, error)
+}
+
+func NewBalanceGettingHandler(service BalanceGettingService, logger *logging.ZapLogger) *BalanceGettingHandler {
+	return &BalanceGettingHandler{
+		service: service,
+		logger:  logger,
+	}
+}
+
+func (h *BalanceGettingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	userId, err := userIdFromCtx(r.Context())
+	if err != nil {
+		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	balanceInfo, err := h.service.GetUserBalanceInfo(r.Context(), userId)
+	if err != nil {
+		h.logger.ErrorCtx(r.Context(), "Failed to get user balance info", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	convertedBalanceInfo := BalanceInfo{
+		Balance:     balanceInfo.Balance,
+		Withdrawals: balanceInfo.Withdrawals,
+	}
+	res, err := json.Marshal(convertedBalanceInfo)
+	if err != nil {
+		h.logger.ErrorCtx(r.Context(), "Error marshalling balance info", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Add("Content-Type", "application/json")
+	_, err = w.Write(res)
+	if err != nil {
+		h.logger.ErrorCtx(r.Context(), "Error writing response", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}

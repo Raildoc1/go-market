@@ -2,10 +2,10 @@ BEGIN TRANSACTION;
 
 CREATE TABLE withdrawals
 (
-    id           SERIAL PRIMARY KEY,
-    order_number VARCHAR(1024),
-    amount       BIGINT NOT NULL,
-    process_time TIMESTAMP
+    order_number VARCHAR(1024) PRIMARY KEY,
+    user_id      INT       NOT NULL,
+    amount       BIGINT    NOT NULL,
+    process_time TIMESTAMP NOT NULL
 );
 
 COMMIT;

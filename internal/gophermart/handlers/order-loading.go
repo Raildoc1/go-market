@@ -5,9 +5,9 @@ import (
 	"errors"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
+	"go-market/pkg/lunh"
 	"go.uber.org/zap"
 	"io"
-	"math/big"
 	"net/http"
 )
 
@@ -17,7 +17,7 @@ type OrderLoadingHandler struct {
 }
 
 type OrderLoadingService interface {
-	RegisterOrder(ctx context.Context, userId int, orderNumber *big.Int) error
+	RegisterOrder(ctx context.Context, userId int, orderNumber string) error
 }
 
 func NewOrderLoadingHandler(service OrderLoadingService, logger *logging.ZapLogger) *OrderLoadingHandler {
@@ -44,11 +44,10 @@ func (h *OrderLoadingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	bodyStr := string(body)
-	orderNumber, ok := new(big.Int).SetString(bodyStr, 10)
-	if !ok {
-		h.logger.ErrorCtx(r.Context(), "Failed to parse order number", zap.String("body", bodyStr))
-		w.WriteHeader(http.StatusBadRequest)
+	orderNumber := string(body)
+	if !lunh.Validate(orderNumber) {
+		h.logger.DebugCtx(r.Context(), "Invalid order number", zap.String("body", orderNumber))
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
 	userId, err := userIdFromCtx(r.Context())

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
+	"go-market/pkg/lunh"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -42,6 +43,12 @@ func (h *WithdrawRequesterHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		h.logger.DebugCtx(r.Context(), "input decoding error", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !lunh.Validate(request.OrderNumber) {
+		h.logger.DebugCtx(r.Context(), "Invalid order number", zap.String("body", request.OrderNumber))
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
 

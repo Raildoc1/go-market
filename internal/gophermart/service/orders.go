@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"go-market/internal/common/clientprotocol"
 	"go-market/internal/gophermart/data"
-	"math/big"
 	"time"
 )
 
@@ -22,7 +21,7 @@ type Orders struct {
 
 type OrderRepository interface {
 	InsertOrder(ctx context.Context, order data.Order) error
-	GetOrderOwner(ctx context.Context, orderNumber *big.Int) (userId int, err error)
+	GetOrderOwner(ctx context.Context, orderNumber string) (userId int, err error)
 	GetAllUserOrders(ctx context.Context, userId int) ([]data.Order, error)
 }
 
@@ -33,10 +32,10 @@ func NewOrders(transactionManager TransactionManager, orderRepository OrderRepos
 	}
 }
 
-func (o *Orders) RegisterOrder(ctx context.Context, userId int, orderNumber *big.Int) error {
+func (o *Orders) RegisterOrder(ctx context.Context, userId int, orderNumber string) error {
 	order := data.Order{
 		UserId:      userId,
-		OrderNumber: orderNumber.String(),
+		OrderNumber: orderNumber,
 		Status:      data.NewStatus,
 		Accrual:     0,
 		UploadTime:  time.Now(),

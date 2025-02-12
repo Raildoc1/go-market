@@ -10,7 +10,6 @@ import (
 	"go-market/internal/gophermart/data"
 	"go-market/pkg/logging"
 	"go.uber.org/zap"
-	"math/big"
 	"strings"
 )
 
@@ -99,7 +98,7 @@ func (db *DBRepository) InsertOrder(ctx context.Context, order data.Order) error
 //go:embed sql/select_order_owner.sql
 var selectOrderOwnerQuery string
 
-func (db *DBRepository) GetOrderOwner(ctx context.Context, orderNumber *big.Int) (userId int, err error) {
+func (db *DBRepository) GetOrderOwner(ctx context.Context, orderNumber string) (userId int, err error) {
 	err = db.storage.QueryValue(ctx, selectOrderOwnerQuery, []any{orderNumber}, []any{&userId})
 	if err != nil {
 		return invalidUserId, handleSQLError(err)

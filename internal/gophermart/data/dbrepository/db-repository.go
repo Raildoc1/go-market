@@ -107,6 +107,44 @@ func (db *DBRepository) GetOrderOwner(ctx context.Context, orderNumber *big.Int)
 	return userId, nil
 }
 
+//go:embed sql/select_orders.sql
+var selectOrdersQuery string
+
+func (db *DBRepository) GetAllUserOrders(ctx context.Context, userId int) ([]data.Order, error) {
+	rows, err := db.storage.Query(ctx, selectOrdersQuery, userId)
+	if err != nil {
+		return nil, handleSQLError(err)
+	}
+	defer rows.Close()
+
+	if err = rows.Err(); err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return make([]data.Order, 0), nil
+		default:
+			return nil, handleSQLError(err)
+		}
+	}
+
+	result := make([]data.Order, 0)
+	for rows.Next() {
+		order := data.Order{
+			UserId: userId,
+		}
+		err := rows.Scan(
+			&order.OrderNumber,
+			&order.Accrual,
+			&order.UploadTime,
+			&order.Status,
+		)
+		if err != nil {
+			return nil, handleSQLError(err)
+		}
+		result = append(result, order)
+	}
+	return result, nil
+}
+
 func (db *DBRepository) GetOrders(ctx context.Context, limit int, allowedStatuses ...data.Status) ([]data.Order, error) {
 	query := "SELECT number, user_id, accrual, upload_time, status FROM orders"
 	if len(allowedStatuses) > 0 {
@@ -210,7 +248,7 @@ func (db *DBRepository) SetOrderStatus(
 //go:embed sql/select_user_withdrawals_sum.sql
 var selectUserWithdrawalsSumQuery string
 
-func (db *DBRepository) GetAllUserWithdrawals(ctx context.Context, userId int) (value int64, err error) {
+func (db *DBRepository) GetTotalUserWithdraw(ctx context.Context, userId int) (value int64, err error) {
 	var t *int64
 	err = db.storage.QueryValue(ctx, selectUserWithdrawalsSumQuery, []any{userId}, []any{&t})
 	if err != nil {
@@ -220,6 +258,61 @@ func (db *DBRepository) GetAllUserWithdrawals(ctx context.Context, userId int) (
 		return 0, nil
 	}
 	return *t, nil
+}
+
+//go:embed sql/insert_withdrawal.sql
+var insertWithdrawalQuery string
+
+func (db *DBRepository) InsertWithdrawal(ctx context.Context, withdrawal data.Withdrawal) error {
+	_, err := db.storage.Exec(
+		ctx,
+		insertWithdrawalQuery,
+		withdrawal.OrderNumber,
+		withdrawal.UserId,
+		withdrawal.Amount,
+		withdrawal.ProcessTime,
+	)
+	if err != nil {
+		return handleSQLError(err)
+	}
+	return nil
+}
+
+//go:embed sql/select_withdrawals.sql
+var selectWithdrawalsQuery string
+
+func (db *DBRepository) GetAllUserWithdrawals(ctx context.Context, userId int) ([]data.Withdrawal, error) {
+	rows, err := db.storage.Query(ctx, selectWithdrawalsQuery, userId)
+	if err != nil {
+		return nil, handleSQLError(err)
+	}
+	defer rows.Close()
+
+	if err = rows.Err(); err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return make([]data.Withdrawal, 0), nil
+		default:
+			return nil, handleSQLError(err)
+		}
+	}
+
+	result := make([]data.Withdrawal, 0)
+	for rows.Next() {
+		order := data.Withdrawal{
+			UserId: userId,
+		}
+		err := rows.Scan(
+			&order.OrderNumber,
+			&order.Amount,
+			&order.ProcessTime,
+		)
+		if err != nil {
+			return nil, handleSQLError(err)
+		}
+		result = append(result, order)
+	}
+	return result, nil
 }
 
 func handleSQLError(err error) error {

@@ -1,5 +1,4 @@
-SELECT number
+SELECT number, accrual, upload_time, status
 FROM orders
-WHERE status IN (%s)
-LIMIT $1
+WHERE user_id = $1
 

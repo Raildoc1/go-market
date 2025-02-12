@@ -8,6 +8,7 @@ import (
 	"go-market/pkg/logging"
 	"go.uber.org/zap"
 	"io"
+	"net/http"
 	"strconv"
 )
 
@@ -29,4 +30,17 @@ func decodeJSON[T any](r io.Reader) (T, error) {
 func userIdFromCtx(ctx context.Context) (userId int, err error) {
 	_, claims, _ := jwtauth.FromContext(ctx)
 	return strconv.Atoi(claims[service.UserIdClaimName].(string))
+}
+
+func tryWriteResponseJSON(w http.ResponseWriter, responseItem any) error {
+	res, err := json.Marshal(responseItem)
+	if err != nil {
+		return err
+	}
+	w.Header().Add("Content-Type", "application/json")
+	_, err = w.Write(res)
+	if err != nil {
+		return err
+	}
+	return nil
 }

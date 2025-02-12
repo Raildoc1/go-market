@@ -30,6 +30,8 @@ type OrdersService interface {
 
 type WalletService interface {
 	handlers.BalanceGettingService
+	handlers.WithdrawalsGettingService
+	handlers.WithdrawRequesterService
 }
 
 func NewServer(
@@ -89,6 +91,8 @@ func createMux(
 	orderLoadingHandler := handlers.NewOrderLoadingHandler(ordersService, logger)
 	orderGettingHandler := handlers.NewOrderGettingHandler(ordersService, logger)
 	balanceGettingHandler := handlers.NewBalanceGettingHandler(walletService, logger)
+	withdrawalsGettingHandler := handlers.NewWithdrawalsGettingHandler(walletService, logger)
+	withdrawHandler := handlers.NewWithdrawRequesterHandler(walletService, logger)
 
 	loggerContextMiddleware := middleware.NewLoggerContext()
 	panicRecover := middleware.NewPanicRecover(logger)
@@ -106,7 +110,11 @@ func createMux(
 		).Route("/", func(router chi.Router) {
 			router.Post("/orders", orderLoadingHandler.ServeHTTP)
 			router.Get("/orders", orderGettingHandler.ServeHTTP)
-			router.Get("/balance", balanceGettingHandler.ServeHTTP)
+			router.Get("/withdrawals", withdrawalsGettingHandler.ServeHTTP)
+			router.Route("/balance", func(router chi.Router) {
+				router.Get("/", balanceGettingHandler.ServeHTTP)
+				router.Post("/withdraw", withdrawHandler.ServeHTTP)
+			})
 		})
 	})
 

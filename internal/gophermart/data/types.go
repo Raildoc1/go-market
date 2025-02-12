@@ -21,3 +21,10 @@ type Order struct {
 	Status      Status
 	UploadTime  time.Time
 }
+
+type Withdrawal struct {
+	OrderNumber string
+	UserId      int
+	Amount      int64
+	ProcessTime time.Time
+}

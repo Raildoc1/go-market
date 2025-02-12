@@ -23,7 +23,7 @@ type Orders struct {
 type OrderRepository interface {
 	InsertOrder(ctx context.Context, order data.Order) error
 	GetOrderOwner(ctx context.Context, orderNumber *big.Int) (userId int, err error)
-	GetOrders(ctx context.Context, limit int, allowedStatuses ...data.Status) ([]data.Order, error)
+	GetAllUserOrders(ctx context.Context, userId int) ([]data.Order, error)
 }
 
 func NewOrders(transactionManager TransactionManager, orderRepository OrderRepository) *Orders {
@@ -60,8 +60,8 @@ func (o *Orders) RegisterOrder(ctx context.Context, userId int, orderNumber *big
 	return nil
 }
 
-func (o *Orders) GetAllOrders(ctx context.Context) ([]clientprotocol.Order, error) {
-	orders, err := o.orderRepository.GetOrders(ctx, 0)
+func (o *Orders) GetAllOrders(ctx context.Context, userId int) ([]clientprotocol.Order, error) {
+	orders, err := o.orderRepository.GetAllUserOrders(ctx, userId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting all orders: %w", err)
 	}

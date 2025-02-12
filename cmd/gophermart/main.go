@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-chi/jwtauth/v5"
-	"go-market/cmd/gophermart/Config"
+	"go-market/cmd/gophermart/config"
 	"go-market/internal/gophermart"
 	"go-market/internal/gophermart/accrualsystem"
 	"go-market/internal/gophermart/data/database"

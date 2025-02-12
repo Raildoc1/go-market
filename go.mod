@@ -1,6 +1,6 @@
 module go-market
 
-go 1.23.3
+go 1.22.9
 
 require (
 	github.com/go-chi/chi/v5 v5.2.0
@@ -8,7 +8,6 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/jackc/pgx/v5 v5.7.2
-	github.com/theplant/luhn v0.0.0-20170224032821-81a1a381387a
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.10.0
 )

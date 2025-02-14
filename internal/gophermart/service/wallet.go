@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/shopspring/decimal"
 	"go-market/internal/gophermart/data"
 	"time"
 )
@@ -12,20 +13,20 @@ var (
 )
 
 type BalanceInfo struct {
-	Balance     int64
-	Withdrawals int64
+	Balance     decimal.Decimal
+	Withdrawals decimal.Decimal
 }
 
 type Withdrawal struct {
 	OrderNumber string
-	Amount      int64
+	Amount      decimal.Decimal
 	ProcessTime time.Time
 }
 
 type BalanceRepository interface {
-	GetUserBalance(ctx context.Context, userId int) (points int64, err error)
-	SetUserBalance(ctx context.Context, userId int, value int64) error
-	GetTotalUserWithdraw(ctx context.Context, userId int) (value int64, err error)
+	GetUserBalance(ctx context.Context, userId int) (balance decimal.Decimal, err error)
+	SetUserBalance(ctx context.Context, userId int, value decimal.Decimal) error
+	GetTotalUserWithdraw(ctx context.Context, userId int) (value decimal.Decimal, err error)
 	InsertWithdrawal(ctx context.Context, withdrawal data.Withdrawal) error
 	GetAllUserWithdrawals(ctx context.Context, userId int) ([]data.Withdrawal, error)
 }
@@ -63,16 +64,16 @@ func (w *Wallet) GetUserBalanceInfo(ctx context.Context, userId int) (BalanceInf
 	return res, nil
 }
 
-func (w *Wallet) Withdraw(ctx context.Context, userId int, orderNumber string, amount int64) error {
+func (w *Wallet) Withdraw(ctx context.Context, userId int, orderNumber string, amount decimal.Decimal) error {
 	return w.transactionManager.DoWithTransaction(ctx, func(ctx context.Context) error {
 		balance, err := w.repository.GetUserBalance(ctx, userId)
 		if err != nil {
 			return err
 		}
-		if balance < amount {
+		if balance.LessThan(amount) {
 			return ErrNotEnoughBalance
 		}
-		newBalance := balance - amount
+		newBalance := balance.Sub(amount)
 		err = w.repository.SetUserBalance(ctx, userId, newBalance)
 		if err != nil {
 			return err

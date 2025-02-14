@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"github.com/shopspring/decimal"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go-market/pkg/lunh"
@@ -16,12 +17,12 @@ type WithdrawRequesterHandler struct {
 }
 
 type WithdrawRequesterService interface {
-	Withdraw(ctx context.Context, userId int, orderNumber string, amount int64) error
+	Withdraw(ctx context.Context, userId int, orderNumber string, amount decimal.Decimal) error
 }
 
 type WithdrawalRequest struct {
-	OrderNumber string `json:"order"`
-	Amount      int64  `json:"sum"`
+	OrderNumber string          `json:"order"`
+	Amount      decimal.Decimal `json:"sum"`
 }
 
 func NewWithdrawRequesterHandler(service WithdrawRequesterService, logger *logging.ZapLogger) *WithdrawRequesterHandler {

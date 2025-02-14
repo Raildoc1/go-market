@@ -1,6 +1,7 @@
 package data
 
 import (
+	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -17,7 +18,7 @@ const (
 type Order struct {
 	OrderNumber string
 	UserId      int
-	Accrual     int64
+	Accrual     decimal.Decimal
 	Status      Status
 	UploadTime  time.Time
 }
@@ -25,6 +26,6 @@ type Order struct {
 type Withdrawal struct {
 	OrderNumber string
 	UserId      int
-	Amount      int64
+	Amount      decimal.Decimal
 	ProcessTime time.Time
 }

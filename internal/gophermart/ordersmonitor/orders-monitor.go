@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"go-market/internal/common/accrualsystemprotocol"
 	"go-market/internal/gophermart/accrualsystem"
 	"go-market/internal/gophermart/data"
@@ -21,12 +22,12 @@ type TransactionManager interface {
 type OrdersRepository interface {
 	GetOrders(ctx context.Context, limit int, allowedStatuses ...data.Status) ([]data.Order, error)
 	GetOrder(ctx context.Context, orderNumber string) (userId int, status data.Status, err error)
-	SetOrderStatus(ctx context.Context, orderNumber string, accrual int64, status data.Status) error
+	SetOrderStatus(ctx context.Context, orderNumber string, accrual decimal.Decimal, status data.Status) error
 }
 
 type BonusPointsRepository interface {
-	GetUserBalance(ctx context.Context, userId int) (int64, error)
-	SetUserBalance(ctx context.Context, userId int, value int64) error
+	GetUserBalance(ctx context.Context, userId int) (decimal.Decimal, error)
+	SetUserBalance(ctx context.Context, userId int, value decimal.Decimal) error
 }
 
 type AccrualSystem interface {
@@ -170,18 +171,18 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 		if err != nil {
 			switch {
 			case errors.Is(err, accrualsystem.ErrNoOrderFound):
-				return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, 0, data.InvalidStatus)
+				return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, decimal.Zero, data.InvalidStatus)
 			default:
 				return fmt.Errorf("failed to get remote order status: %w", err)
 			}
 		}
 		switch remoteOrder.Status {
 		case accrualsystemprotocol.Invalid:
-			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, 0, data.InvalidStatus)
+			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, decimal.Zero, data.InvalidStatus)
 		case accrualsystemprotocol.Registered:
 			fallthrough
 		case accrualsystemprotocol.Processing:
-			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, 0, data.ProcessingStatus)
+			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, decimal.Zero, data.ProcessingStatus)
 		case accrualsystemprotocol.Processed:
 			currentPoints, err := om.bonusPointsRepository.GetUserBalance(ctx, userId)
 			if err != nil {
@@ -190,7 +191,7 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 			err = om.bonusPointsRepository.SetUserBalance(
 				ctx,
 				userId,
-				currentPoints+remoteOrder.Accrual,
+				currentPoints.Add(remoteOrder.Accrual),
 			)
 			return om.orderStatusRepository.SetOrderStatus(
 				ctx,

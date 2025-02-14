@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/shopspring/decimal"
 	"go-market/internal/gophermart/data"
 	"go-market/pkg/logging"
 	"go.uber.org/zap"
@@ -195,14 +196,14 @@ func (db *DBRepository) GetOrders(ctx context.Context, limit int, allowedStatuse
 //go:embed sql/select_user_balance.sql
 var selectUserBalanceQuery string
 
-func (db *DBRepository) GetUserBalance(ctx context.Context, userId int) (int64, error) {
-	var t *int64
+func (db *DBRepository) GetUserBalance(ctx context.Context, userId int) (decimal.Decimal, error) {
+	var t *decimal.Decimal
 	err := db.storage.QueryValue(ctx, selectUserBalanceQuery, []any{userId}, []any{&t})
 	if err != nil {
-		return invalidPoints, handleSQLError(err)
+		return decimal.Decimal{}, handleSQLError(err)
 	}
 	if t == nil {
-		return 0, nil
+		return decimal.Zero, nil
 	}
 	return *t, nil
 }
@@ -210,7 +211,7 @@ func (db *DBRepository) GetUserBalance(ctx context.Context, userId int) (int64, 
 //go:embed sql/update_user_balance.sql
 var updateUserBalanceQuery string
 
-func (db *DBRepository) SetUserBalance(ctx context.Context, userId int, value int64) error {
+func (db *DBRepository) SetUserBalance(ctx context.Context, userId int, value decimal.Decimal) error {
 	_, err := db.storage.Exec(ctx, updateUserBalanceQuery, userId, value)
 	if err != nil {
 		return handleSQLError(err)
@@ -236,7 +237,7 @@ var updateOrderStatusQuery string
 func (db *DBRepository) SetOrderStatus(
 	ctx context.Context,
 	orderNumber string,
-	accrual int64,
+	accrual decimal.Decimal,
 	status data.Status,
 ) error {
 	_, err := db.storage.Exec(ctx, updateOrderStatusQuery, orderNumber, status, accrual)
@@ -249,14 +250,14 @@ func (db *DBRepository) SetOrderStatus(
 //go:embed sql/select_user_withdrawals_sum.sql
 var selectUserWithdrawalsSumQuery string
 
-func (db *DBRepository) GetTotalUserWithdraw(ctx context.Context, userId int) (value int64, err error) {
-	var t *int64
+func (db *DBRepository) GetTotalUserWithdraw(ctx context.Context, userId int) (value decimal.Decimal, err error) {
+	var t *decimal.Decimal
 	err = db.storage.QueryValue(ctx, selectUserWithdrawalsSumQuery, []any{userId}, []any{&t})
 	if err != nil {
-		return 0, handleSQLError(err)
+		return decimal.Zero, handleSQLError(err)
 	}
 	if t == nil {
-		return 0, nil
+		return decimal.Zero, nil
 	}
 	return *t, nil
 }

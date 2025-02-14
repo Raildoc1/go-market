@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"github.com/shopspring/decimal"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go.uber.org/zap"
@@ -10,8 +11,8 @@ import (
 )
 
 type BalanceInfo struct {
-	Balance     int64 `json:"current"`
-	Withdrawals int64 `json:"withdrawn"`
+	Balance     decimal.Decimal `json:"current"`
+	Withdrawals decimal.Decimal `json:"withdrawn"`
 }
 
 type BalanceGettingHandler struct {

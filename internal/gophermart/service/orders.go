@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"go-market/internal/common/clientprotocol"
 	"go-market/internal/gophermart/data"
 	"time"
@@ -37,7 +38,7 @@ func (o *Orders) RegisterOrder(ctx context.Context, userId int, orderNumber stri
 		UserId:      userId,
 		OrderNumber: orderNumber,
 		Status:      data.NewStatus,
-		Accrual:     0,
+		Accrual:     decimal.Zero,
 		UploadTime:  time.Now(),
 	}
 	err := o.orderRepository.InsertOrder(ctx, order)

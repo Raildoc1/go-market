@@ -1,6 +1,9 @@
 package clientprotocol
 
-import "time"
+import (
+	"github.com/shopspring/decimal"
+	"time"
+)
 
 const (
 	Null       OrderStatus = ""
@@ -13,8 +16,8 @@ const (
 type OrderStatus string
 
 type Order struct {
-	Number     string      `json:"number"`
-	Status     OrderStatus `json:"status"`
-	Accrual    int64       `json:"accrual"`
-	UploadedAt time.Time   `json:"uploaded_at"`
+	Number     string          `json:"number"`
+	Status     OrderStatus     `json:"status"`
+	Accrual    decimal.Decimal `json:"accrual"`
+	UploadedAt time.Time       `json:"uploaded_at"`
 }

@@ -125,3 +125,7 @@ func (z *ZapLogger) SetLevel(level zapcore.Level) {
 func (z *ZapLogger) Std() *log.Logger {
 	return zap.NewStdLog(z.logger)
 }
+
+func (z *ZapLogger) Raw() *zap.Logger {
+	return z.logger
+}

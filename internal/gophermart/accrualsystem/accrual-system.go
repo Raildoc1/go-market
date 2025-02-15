@@ -17,12 +17,14 @@ type Config struct {
 	ServerAddress string
 }
 type AccrualSystem struct {
-	cfg Config
+	cfg    Config
+	logger resty.Logger
 }
 
-func NewAccrualSystem(cfg Config) *AccrualSystem {
+func NewAccrualSystem(cfg Config, logger resty.Logger) *AccrualSystem {
 	return &AccrualSystem{
-		cfg: cfg,
+		cfg:    cfg,
+		logger: logger,
 	}
 }
 
@@ -31,6 +33,7 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 	resp, err := resty.
 		New().
 		R().
+		SetLogger(as.logger).
 		SetContext(ctx).
 		SetQueryParam("number", orderNumber).
 		Get(url)

@@ -32,6 +32,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	restyLogger := accrualsystem.NewRestyLogger(logger.Raw())
 
 	dbFactory := database.NewPgxDatabaseFactory(
 		database.Config{
@@ -51,7 +52,7 @@ func main() {
 	authorization := service.NewAuthorization(repository, transactionManager, tokenFactory)
 	orders := service.NewOrders(transactionManager, repository)
 	wallet := service.NewWallet(transactionManager, repository, logger)
-	accrualSystem := accrualsystem.NewAccrualSystem(cfg.AccrualSystem)
+	accrualSystem := accrualsystem.NewAccrualSystem(cfg.AccrualSystem, restyLogger)
 
 	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, orders, wallet, logger)
 	ordersMonitor := ordersmonitor.NewOrdersMonitor(cfg.OrdersMonitor, repository, repository, transactionManager, accrualSystem, logger)

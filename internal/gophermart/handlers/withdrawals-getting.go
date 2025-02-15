@@ -4,9 +4,10 @@ import (
 	"context"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
-	"go.uber.org/zap"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type WithdrawalsGettingHandler struct {
@@ -24,7 +25,10 @@ type WithdrawalsGettingService interface {
 	GetAllUserWithdrawals(ctx context.Context, userID int) ([]service.Withdrawal, error)
 }
 
-func NewWithdrawalsGettingHandler(service WithdrawalsGettingService, logger *logging.ZapLogger) *WithdrawalsGettingHandler {
+func NewWithdrawalsGettingHandler(
+	service WithdrawalsGettingService,
+	logger *logging.ZapLogger,
+) *WithdrawalsGettingHandler {
 	return &WithdrawalsGettingHandler{
 		service: service,
 		logger:  logger,
@@ -32,9 +36,9 @@ func NewWithdrawalsGettingHandler(service WithdrawalsGettingService, logger *log
 }
 
 func (h *WithdrawalsGettingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userID, err := userIdFromCtx(r.Context())
+	userID, err := userIDFromCtx(r.Context())
 	if err != nil {
-		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
+		h.logger.ErrorCtx(r.Context(), failedToRecoverUserIDErrorMessage, zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

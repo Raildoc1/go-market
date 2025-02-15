@@ -3,13 +3,24 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"github.com/go-chi/jwtauth/v5"
+	"errors"
+	"fmt"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/jwtauth/v5"
+	"go.uber.org/zap"
+)
+
+const (
+	invalidUserID = -1
+)
+
+var (
+	failedToRecoverUserIDErrorMessage = "failed to recover user id"
 )
 
 func closeBody(ctx context.Context, body io.ReadCloser, logger *logging.ZapLogger) {
@@ -24,12 +35,20 @@ func decodeJSON[T any](r io.Reader) (T, error) {
 	decoder := json.NewDecoder(r)
 	decoder.DisallowUnknownFields()
 	err := decoder.Decode(&out)
-	return out, err
+	return out, err //nolint:wrapcheck // unnecessary
 }
 
-func userIdFromCtx(ctx context.Context) (userID int, err error) {
+func userIDFromCtx(ctx context.Context) (userID int, err error) {
 	_, claims, _ := jwtauth.FromContext(ctx)
-	return strconv.Atoi(claims[service.UserIdClaimName].(string)) //nolint:errcheck // unnecessary
+	userIDStr, ok := claims[service.UserIDClaimName].(string)
+	if !ok {
+		return invalidUserID, errors.New("invalid user id type")
+	}
+	userID, err = strconv.Atoi(userIDStr)
+	if err != nil {
+		return invalidUserID, fmt.Errorf("failed to parse user id: %w", err)
+	}
+	return userID, nil
 }
 
 func tryWriteResponseJSON(w http.ResponseWriter, responseItem any) error {

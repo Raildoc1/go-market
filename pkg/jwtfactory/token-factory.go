@@ -2,8 +2,9 @@ package jwtfactory
 
 import (
 	"fmt"
-	"github.com/go-chi/jwtauth/v5"
 	"time"
+
+	"github.com/go-chi/jwtauth/v5"
 )
 
 type TokenFactory struct {

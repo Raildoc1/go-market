@@ -3,12 +3,13 @@ package handlers
 import (
 	"context"
 	"errors"
-	"github.com/shopspring/decimal"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go-market/pkg/lunh"
-	"go.uber.org/zap"
 	"net/http"
+
+	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
 )
 
 type WithdrawRequesterHandler struct {
@@ -25,7 +26,10 @@ type WithdrawalRequest struct {
 	Amount      decimal.Decimal `json:"sum"`
 }
 
-func NewWithdrawRequesterHandler(service WithdrawRequesterService, logger *logging.ZapLogger) *WithdrawRequesterHandler {
+func NewWithdrawRequesterHandler(
+	service WithdrawRequesterService,
+	logger *logging.ZapLogger,
+) *WithdrawRequesterHandler {
 	return &WithdrawRequesterHandler{
 		service: service,
 		logger:  logger,
@@ -33,9 +37,9 @@ func NewWithdrawRequesterHandler(service WithdrawRequesterService, logger *loggi
 }
 
 func (h *WithdrawRequesterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userID, err := userIdFromCtx(r.Context())
+	userID, err := userIDFromCtx(r.Context())
 	if err != nil {
-		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
+		h.logger.ErrorCtx(r.Context(), failedToRecoverUserIDErrorMessage, zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

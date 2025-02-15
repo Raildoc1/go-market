@@ -20,6 +20,12 @@ const (
 	dbConnectionStringFlag      = "d"
 	dbConnectionStringEnv       = "DATABASE_URI"
 	dbConnectionStringDefault   = ""
+
+	defaultWorkersCount     = 5
+	defaultTaskBufferLength = 10
+
+	defaultShutdownTimeout = 5 * time.Second
+	defaultTickPeriod      = 3 * time.Second
 )
 
 type Config struct {
@@ -73,7 +79,7 @@ func Load() (*Config, error) {
 	return &Config{
 		Server: gophermart.Config{
 			ServerAddress:   *serverAddress,
-			ShutdownTimeout: time.Second * 5,
+			ShutdownTimeout: defaultShutdownTimeout,
 		},
 		JWTConfig: JWTConfig{
 			Algorithm:      "HS256",
@@ -83,11 +89,11 @@ func Load() (*Config, error) {
 		DB: database.Config{
 			ConnectionString: *dbConnectionString,
 		},
-		ShutdownTimeout: time.Second * 5,
+		ShutdownTimeout: defaultShutdownTimeout,
 		OrdersMonitor: ordersmonitor.Config{
-			TickPeriod:        time.Second * 3,
-			WorkersCount:      5,
-			TasksBufferLength: 10,
+			TickPeriod:        defaultTickPeriod,
+			WorkersCount:      defaultWorkersCount,
+			TasksBufferLength: defaultTaskBufferLength,
 		},
 		AccrualSystem: accrualsystem.Config{
 			ServerAddress: *accrualSystemAddress,

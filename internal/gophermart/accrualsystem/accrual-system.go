@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-resty/resty/v2"
 	"go-market/internal/common/accrualsystemprotocol"
 	"go-market/pkg/logging"
+
+	"github.com/go-resty/resty/v2"
 	"go.uber.org/zap"
 )
 

@@ -2,8 +2,9 @@ package middleware
 
 import (
 	"go-market/pkg/logging"
-	"go.uber.org/zap"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 type LoggerContext struct{}

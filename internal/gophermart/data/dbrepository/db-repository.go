@@ -5,13 +5,14 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"go-market/internal/gophermart/data"
+	"go-market/pkg/logging"
+	"strings"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/shopspring/decimal"
-	"go-market/internal/gophermart/data"
-	"go-market/pkg/logging"
 	"go.uber.org/zap"
-	"strings"
 )
 
 const (

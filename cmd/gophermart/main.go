@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/jwtauth/v5"
 	"go-market/cmd/gophermart/config"
 	"go-market/internal/gophermart"
 	"go-market/internal/gophermart/accrualsystem"
@@ -15,12 +14,14 @@ import (
 	"go-market/pkg/jwtfactory"
 	"go-market/pkg/logging"
 	"go-market/pkg/pgxstorage"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"golang.org/x/sync/errgroup"
 	"log"
 	"os/signal"
 	"syscall"
+
+	"github.com/go-chi/jwtauth/v5"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {

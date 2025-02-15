@@ -5,8 +5,9 @@ import (
 	"errors"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
-	"go.uber.org/zap"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 type AuthorizationHandler struct {
@@ -44,11 +45,11 @@ func (h *AuthorizationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrInvalidCredentials):
-			h.logger.DebugCtx(r.Context(), "service error", zap.Error(err), zap.Any("input", input))
+			h.logger.DebugCtx(r.Context(), err.Error(), zap.Any("input", input))
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		default:
-			h.logger.ErrorCtx(r.Context(), "service error", zap.Error(err), zap.Any("input", input))
+			h.logger.ErrorCtx(r.Context(), "login service error", zap.Error(err), zap.Any("input", input))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

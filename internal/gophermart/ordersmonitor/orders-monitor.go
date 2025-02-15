@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"go-market/internal/common/accrualsystemprotocol"
 	"go-market/internal/gophermart/accrualsystem"
 	"go-market/internal/gophermart/data"
 	"go-market/pkg/logging"
 	"go-market/pkg/threadsafe"
-	"go.uber.org/zap"
 	"sync"
 	"time"
+
+	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
 )
 
 type TransactionManager interface {
@@ -46,10 +47,9 @@ type OrdersMonitor struct {
 	transactionManager    TransactionManager
 	accrualSystem         AccrualSystem
 	processingOrders      *threadsafe.HashSet[string]
-	config                Config
 	logger                *logging.ZapLogger
-	done                  chan struct {
-	}
+	done                  chan struct{}
+	config                Config
 }
 
 func NewOrdersMonitor(
@@ -128,7 +128,7 @@ func (om *OrdersMonitor) tick(orderNumbersChan chan<- string) error {
 		data.ProcessingStatus,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("getting orders failed: %w", err)
 	}
 	if len(orderNumbers) == 0 {
 		return nil
@@ -156,16 +156,19 @@ func (om *OrdersMonitor) worker(orderNumberChan <-chan string) {
 }
 
 func (om *OrdersMonitor) handleOrder(orderNumber string) error {
+	//nolint:wrapcheck // wrapping unnecessary
 	return om.transactionManager.DoWithTransaction(context.Background(), func(ctx context.Context) error {
 		userID, status, err := om.orderStatusRepository.GetOrder(ctx, orderNumber)
 		if err != nil {
 			return fmt.Errorf("failed to get order: %w", err)
 		}
-		switch status {
+		switch status { //nolint:exhaustive // only these statuses considered as finished
 		case data.ProcessedStatus:
 			return nil
 		case data.InvalidStatus:
 			return nil
+		case data.NullStatus:
+			return errors.New("invalid order status")
 		}
 		remoteOrder, err := om.accrualSystem.GetOrderStatus(ctx, orderNumber)
 		if err != nil {
@@ -179,9 +182,7 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 		switch remoteOrder.Status {
 		case accrualsystemprotocol.Invalid:
 			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, decimal.Zero, data.InvalidStatus)
-		case accrualsystemprotocol.Registered:
-			fallthrough
-		case accrualsystemprotocol.Processing:
+		case accrualsystemprotocol.Processing, accrualsystemprotocol.Registered:
 			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, decimal.Zero, data.ProcessingStatus)
 		case accrualsystemprotocol.Processed:
 			currentPoints, err := om.bonusPointsRepository.GetUserBalance(ctx, userID)

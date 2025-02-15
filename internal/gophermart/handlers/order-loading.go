@@ -6,9 +6,10 @@ import (
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go-market/pkg/lunh"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 type OrderLoadingHandler struct {
@@ -50,9 +51,9 @@ func (h *OrderLoadingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
-	userID, err := userIdFromCtx(r.Context())
+	userID, err := userIDFromCtx(r.Context())
 	if err != nil {
-		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
+		h.logger.ErrorCtx(r.Context(), failedToRecoverUserIDErrorMessage, zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

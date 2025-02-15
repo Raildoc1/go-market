@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"go-market/internal/common/clientprotocol"
 	"go-market/internal/gophermart/data"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 var (
@@ -98,6 +99,8 @@ func convert(status data.Status) (clientprotocol.OrderStatus, error) {
 		return clientprotocol.Processing, nil
 	case data.ProcessedStatus:
 		return clientprotocol.Processed, nil
+	case data.NullStatus:
+		return clientprotocol.Null, nil
 	}
 	return clientprotocol.Null, fmt.Errorf("unknown status %s", status)
 }

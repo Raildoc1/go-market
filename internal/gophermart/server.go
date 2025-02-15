@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/jwtauth/v5"
 	"go-market/internal/gophermart/handlers"
 	"go-market/internal/gophermart/middleware"
 	"go-market/pkg/logging"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 )
 
 type Server struct {

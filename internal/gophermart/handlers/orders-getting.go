@@ -5,9 +5,10 @@ import (
 	"go-market/internal/common/clientprotocol"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
-	"go.uber.org/zap"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type OrderGettingHandler struct {
@@ -34,9 +35,9 @@ func NewOrderGettingHandler(service OrderGettingService, logger *logging.ZapLogg
 }
 
 func (h *OrderGettingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userID, err := userIdFromCtx(r.Context())
+	userID, err := userIDFromCtx(r.Context())
 	if err != nil {
-		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
+		h.logger.ErrorCtx(r.Context(), failedToRecoverUserIDErrorMessage, zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

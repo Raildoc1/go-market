@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/shopspring/decimal"
 	"go-market/internal/gophermart/data"
 	"go-market/pkg/logging"
-	"go.uber.org/zap"
 	"time"
+
+	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
 )
 
 var (
@@ -77,6 +78,7 @@ func (w *Wallet) Withdraw(ctx context.Context, userID int, orderNumber string, a
 		zap.String("orderNumber", orderNumber),
 		zap.String("amount", amount.String()),
 	)
+	//nolint:wrapcheck // wrapping unnecessary
 	return w.transactionManager.DoWithTransaction(ctx, func(ctx context.Context) error {
 		balance, err := w.repository.GetUserBalance(ctx, userID)
 		if err != nil {
@@ -90,12 +92,16 @@ func (w *Wallet) Withdraw(ctx context.Context, userID int, orderNumber string, a
 		if err != nil {
 			return fmt.Errorf("setting user balance failed: %w", err)
 		}
-		return w.repository.InsertWithdrawal(ctx, data.Withdrawal{
+		err = w.repository.InsertWithdrawal(ctx, data.Withdrawal{
 			OrderNumber: orderNumber,
 			Amount:      amount,
 			UserID:      userID,
 			ProcessTime: time.Now(),
 		})
+		if err != nil {
+			return fmt.Errorf("inserting withdrawal failed: %w", err)
+		}
+		return nil
 	})
 }
 

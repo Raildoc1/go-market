@@ -14,7 +14,7 @@ var (
 )
 
 var (
-	UserIdClaimName = "user_id"
+	UserIDClaimName = "user_id"
 )
 
 type UserRepository interface {
@@ -56,7 +56,7 @@ func (r *Authorization) Register(ctx context.Context, login string, password str
 	}
 
 	payload := map[string]string{
-		UserIdClaimName: strconv.Itoa(userID),
+		UserIDClaimName: strconv.Itoa(userID),
 	}
 	token, err := r.tokenFactory.Generate(payload)
 	if err != nil {
@@ -80,7 +80,7 @@ func (r *Authorization) Login(ctx context.Context, login string, password string
 	}
 
 	payload := map[string]string{
-		UserIdClaimName: strconv.Itoa(userID),
+		UserIDClaimName: strconv.Itoa(userID),
 	}
 	token, err := r.tokenFactory.Generate(payload)
 	if err != nil {

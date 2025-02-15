@@ -16,7 +16,7 @@ const (
 	serverAddressDefault        = "localhost:8081"
 	accrualSystemAddressFlag    = "r"
 	accrualSystemAddressEnv     = "ACCRUAL_SYSTEM_ADDRESS"
-	accrualSystemAddressDefault = "localhost:8080"
+	accrualSystemAddressDefault = "http://localhost:8080"
 	dbConnectionStringFlag      = "d"
 	dbConnectionStringEnv       = "DATABASE_URI"
 	dbConnectionStringDefault   = ""

@@ -29,7 +29,7 @@ func NewAccrualSystem(cfg Config, logger resty.Logger) *AccrualSystem {
 }
 
 func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string) (accrualsystemprotocol.Order, error) {
-	url := fmt.Sprintf("http://%s/api/orders/{number}", as.cfg.ServerAddress)
+	url := fmt.Sprintf("%s/api/orders/{number}", as.cfg.ServerAddress)
 	resp, err := resty.
 		New().
 		R().

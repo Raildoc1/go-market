@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-chi/jwtauth/v5"
 	"go-market/cmd/gophermart/config"
@@ -33,6 +34,13 @@ func main() {
 		log.Fatal(err)
 	}
 	restyLogger := accrualsystem.NewRestyLogger(logger.Raw())
+
+	jsCfg, err := json.Marshal(cfg)
+	if err != nil {
+		logger.ErrorCtx(context.Background(), "Failed to marshal configuration", zap.Error(err))
+		return
+	}
+	logger.InfoCtx(context.Background(), "Configuration", zap.String("config", string(jsCfg)))
 
 	dbFactory := database.NewPgxDatabaseFactory(
 		database.Config{

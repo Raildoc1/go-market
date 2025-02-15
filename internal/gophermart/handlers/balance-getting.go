@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"github.com/shopspring/decimal"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go.uber.org/zap"
@@ -11,8 +10,8 @@ import (
 )
 
 type BalanceInfo struct {
-	Balance     decimal.Decimal `json:"current"`
-	Withdrawals decimal.Decimal `json:"withdrawn"`
+	Balance     float64 `json:"current"`
+	Withdrawals float64 `json:"withdrawn"`
 }
 
 type BalanceGettingHandler struct {
@@ -44,9 +43,11 @@ func (h *BalanceGettingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	balance, _ := balanceInfo.Balance.Float64()
+	withdrawals, _ := balanceInfo.Withdrawals.Float64()
 	convertedBalanceInfo := BalanceInfo{
-		Balance:     balanceInfo.Balance,
-		Withdrawals: balanceInfo.Withdrawals,
+		Balance:     balance,
+		Withdrawals: withdrawals,
 	}
 	res, err := json.Marshal(convertedBalanceInfo)
 	if err != nil {

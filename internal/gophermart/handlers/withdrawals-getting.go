@@ -6,11 +6,18 @@ import (
 	"go-market/pkg/logging"
 	"go.uber.org/zap"
 	"net/http"
+	"time"
 )
 
 type WithdrawalsGettingHandler struct {
 	service WithdrawalsGettingService
 	logger  *logging.ZapLogger
+}
+
+type Withdrawal struct {
+	OrderNumber string    `json:"order"`
+	Amount      float64   `json:"sum"`
+	ProcessTime time.Time `json:"processed_at"`
 }
 
 type WithdrawalsGettingService interface {
@@ -41,7 +48,16 @@ func (h *WithdrawalsGettingHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-	if err := tryWriteResponseJSON(w, withdrawals); err != nil {
+	res := make([]Withdrawal, len(withdrawals))
+	for i, withdrawal := range withdrawals {
+		amount, _ := withdrawal.Amount.Float64()
+		res[i] = Withdrawal{
+			OrderNumber: withdrawal.OrderNumber,
+			Amount:      amount,
+			ProcessTime: withdrawal.ProcessTime,
+		}
+	}
+	if err := tryWriteResponseJSON(w, res); err != nil {
 		h.logger.ErrorCtx(r.Context(), "Error writing response", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return

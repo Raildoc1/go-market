@@ -15,6 +15,13 @@ var (
 	ErrOrderRegistered              = errors.New("order is already registered")
 )
 
+type Order struct {
+	Number     string
+	Status     clientprotocol.OrderStatus
+	Accrual    decimal.Decimal
+	UploadedAt time.Time
+}
+
 type Orders struct {
 	transactionManager TransactionManager
 	orderRepository    OrderRepository
@@ -60,18 +67,18 @@ func (o *Orders) RegisterOrder(ctx context.Context, userId int, orderNumber stri
 	return nil
 }
 
-func (o *Orders) GetAllOrders(ctx context.Context, userId int) ([]clientprotocol.Order, error) {
+func (o *Orders) GetAllOrders(ctx context.Context, userId int) ([]Order, error) {
 	orders, err := o.orderRepository.GetAllUserOrders(ctx, userId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting all orders: %w", err)
 	}
-	res := make([]clientprotocol.Order, len(orders))
+	res := make([]Order, len(orders))
 	for i, order := range orders {
 		protocolStatus, err := convert(order.Status)
 		if err != nil {
 			return nil, fmt.Errorf("error converting order: %w", err)
 		}
-		res[i] = clientprotocol.Order{
+		res[i] = Order{
 			Number:     order.OrderNumber,
 			Status:     protocolStatus,
 			Accrual:    order.Accrual,

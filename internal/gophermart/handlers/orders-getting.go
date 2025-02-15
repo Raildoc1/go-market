@@ -3,9 +3,11 @@ package handlers
 import (
 	"context"
 	"go-market/internal/common/clientprotocol"
+	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go.uber.org/zap"
 	"net/http"
+	"time"
 )
 
 type OrderGettingHandler struct {
@@ -13,8 +15,15 @@ type OrderGettingHandler struct {
 	logger  *logging.ZapLogger
 }
 
+type Order struct {
+	Number     string                     `json:"number"`
+	Status     clientprotocol.OrderStatus `json:"status"`
+	Accrual    float64                    `json:"accrual"`
+	UploadedAt time.Time                  `json:"uploaded_at"`
+}
+
 type OrderGettingService interface {
-	GetAllOrders(ctx context.Context, userId int) ([]clientprotocol.Order, error)
+	GetAllOrders(ctx context.Context, userId int) ([]service.Order, error)
 }
 
 func NewOrderGettingHandler(service OrderGettingService, logger *logging.ZapLogger) *OrderGettingHandler {
@@ -41,7 +50,17 @@ func (h *OrderGettingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-	if err := tryWriteResponseJSON(w, orders); err != nil {
+	res := make([]Order, len(orders))
+	for i, order := range orders {
+		accrual, _ := order.Accrual.Float64()
+		res[i] = Order{
+			Number:     order.Number,
+			Status:     order.Status,
+			Accrual:    accrual,
+			UploadedAt: order.UploadedAt,
+		}
+	}
+	if err := tryWriteResponseJSON(w, res); err != nil {
 		h.logger.ErrorCtx(r.Context(), "Error writing response", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return

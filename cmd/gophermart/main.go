@@ -50,7 +50,7 @@ func main() {
 
 	authorization := service.NewAuthorization(repository, transactionManager, tokenFactory)
 	orders := service.NewOrders(transactionManager, repository)
-	wallet := service.NewWallet(transactionManager, repository)
+	wallet := service.NewWallet(transactionManager, repository, logger)
 	accrualSystem := accrualsystem.NewAccrualSystem(cfg.AccrualSystem)
 
 	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, orders, wallet, logger)

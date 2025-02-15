@@ -188,17 +188,27 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 			if err != nil {
 				return fmt.Errorf("failed to get current bonus points: %w", err)
 			}
-			err = om.bonusPointsRepository.SetUserBalance(
+			newBalance := currentPoints.Add(remoteOrder.Accrual)
+			om.logger.DebugCtx(
 				ctx,
-				userId,
-				currentPoints.Add(remoteOrder.Accrual),
+				"setting balance",
+				zap.Any("currentPoints", newBalance),
+				zap.Any("newBalance", newBalance),
 			)
-			return om.orderStatusRepository.SetOrderStatus(
+			err = om.bonusPointsRepository.SetUserBalance(ctx, userId, newBalance)
+			if err != nil {
+				return fmt.Errorf("failed to set current bonus points: %w", err)
+			}
+			err = om.orderStatusRepository.SetOrderStatus(
 				ctx,
 				orderNumber,
 				remoteOrder.Accrual,
 				data.ProcessedStatus,
 			)
+			if err != nil {
+				return fmt.Errorf("failed to set order status: %w", err)
+			}
+			return nil
 		}
 		return nil
 	})

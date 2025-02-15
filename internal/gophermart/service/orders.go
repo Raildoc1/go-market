@@ -29,8 +29,8 @@ type Orders struct {
 
 type OrderRepository interface {
 	InsertOrder(ctx context.Context, order data.Order) error
-	GetOrderOwner(ctx context.Context, orderNumber string) (userId int, err error)
-	GetAllUserOrders(ctx context.Context, userId int) ([]data.Order, error)
+	GetOrderOwner(ctx context.Context, orderNumber string) (userID int, err error)
+	GetAllUserOrders(ctx context.Context, userID int) ([]data.Order, error)
 }
 
 func NewOrders(transactionManager TransactionManager, orderRepository OrderRepository) *Orders {
@@ -40,9 +40,9 @@ func NewOrders(transactionManager TransactionManager, orderRepository OrderRepos
 	}
 }
 
-func (o *Orders) RegisterOrder(ctx context.Context, userId int, orderNumber string) error {
+func (o *Orders) RegisterOrder(ctx context.Context, userID int, orderNumber string) error {
 	order := data.Order{
-		UserId:      userId,
+		UserID:      userID,
 		OrderNumber: orderNumber,
 		Status:      data.NewStatus,
 		Accrual:     decimal.Zero,
@@ -56,7 +56,7 @@ func (o *Orders) RegisterOrder(ctx context.Context, userId int, orderNumber stri
 			if err != nil {
 				return fmt.Errorf("error checking order owner: %w", err)
 			}
-			if owner == userId {
+			if owner == userID {
 				return ErrOrderRegistered
 			}
 			return ErrOrderRegisteredByAnotherUser
@@ -67,8 +67,8 @@ func (o *Orders) RegisterOrder(ctx context.Context, userId int, orderNumber stri
 	return nil
 }
 
-func (o *Orders) GetAllOrders(ctx context.Context, userId int) ([]Order, error) {
-	orders, err := o.orderRepository.GetAllUserOrders(ctx, userId)
+func (o *Orders) GetAllOrders(ctx context.Context, userID int) ([]Order, error) {
+	orders, err := o.orderRepository.GetAllUserOrders(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting all orders: %w", err)
 	}

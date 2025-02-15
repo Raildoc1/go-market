@@ -83,7 +83,7 @@ func (s *DBStorage) QueryValue(ctx context.Context, query string, args []any, de
 	if err != nil {
 		return err
 	}
-	return row.Scan(dest...)
+	return row.Scan(dest...) //nolint:wrapcheck // unnecessary
 }
 
 func (s *DBStorage) withTransaction(ctx context.Context) (context.Context, pgx.Tx, error) {

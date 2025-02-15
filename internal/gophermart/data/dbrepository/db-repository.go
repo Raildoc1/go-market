@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	invalidUserId = -1
-	invalidPoints = -1
+	invalidUserID = -1
 )
 
 type DBStorage interface {
@@ -41,40 +40,40 @@ func New(storage DBStorage, logger *logging.ZapLogger) *DBRepository {
 //go:embed sql/insert_user.sql
 var insertUserQuery string
 
-func (db *DBRepository) InsertUser(ctx context.Context, login, password string) (userId int, err error) {
-	err = db.storage.QueryValue(ctx, insertUserQuery, []any{login, password}, []any{&userId})
+func (db *DBRepository) InsertUser(ctx context.Context, login, password string) (userID int, err error) {
+	err = db.storage.QueryValue(ctx, insertUserQuery, []any{login, password}, []any{&userID})
 	if err != nil {
-		return invalidUserId, handleSQLError(err)
+		return invalidUserID, handleSQLError(err)
 	}
-	return userId, nil
+	return userID, nil
 }
 
 //go:embed sql/validate_user.sql
 var validateUserQuery string
 
-func (db *DBRepository) ValidateUser(ctx context.Context, login, password string) (userId int, err error) {
+func (db *DBRepository) ValidateUser(ctx context.Context, login, password string) (userID int, err error) {
 	result := struct {
-		userId          int
+		userID          int
 		passwordMatches bool
 	}{}
 	err = db.storage.QueryValue(
 		ctx,
 		validateUserQuery,
 		[]any{login, password},
-		[]any{&result.userId, &result.passwordMatches},
+		[]any{&result.userID, &result.passwordMatches},
 	)
 	if err != nil {
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
-			return invalidUserId, data.ErrInvalidLogin
+			return invalidUserID, data.ErrInvalidLogin
 		default:
-			return invalidUserId, err
+			return invalidUserID, fmt.Errorf("failed to validate user: %w", err)
 		}
 	}
 	if !result.passwordMatches {
-		return invalidUserId, data.ErrInvalidPassword
+		return invalidUserID, data.ErrInvalidPassword
 	}
-	return result.userId, nil
+	return result.userID, nil
 }
 
 //go:embed sql/insert_order.sql
@@ -86,7 +85,7 @@ func (db *DBRepository) InsertOrder(ctx context.Context, order data.Order) error
 		insertOrderQuery,
 		order.OrderNumber,
 		string(order.Status),
-		order.UserId,
+		order.UserID,
 		order.Accrual,
 		order.UploadTime,
 	)
@@ -99,19 +98,19 @@ func (db *DBRepository) InsertOrder(ctx context.Context, order data.Order) error
 //go:embed sql/select_order_owner.sql
 var selectOrderOwnerQuery string
 
-func (db *DBRepository) GetOrderOwner(ctx context.Context, orderNumber string) (userId int, err error) {
-	err = db.storage.QueryValue(ctx, selectOrderOwnerQuery, []any{orderNumber}, []any{&userId})
+func (db *DBRepository) GetOrderOwner(ctx context.Context, orderNumber string) (userID int, err error) {
+	err = db.storage.QueryValue(ctx, selectOrderOwnerQuery, []any{orderNumber}, []any{&userID})
 	if err != nil {
-		return invalidUserId, handleSQLError(err)
+		return invalidUserID, handleSQLError(err)
 	}
-	return userId, nil
+	return userID, nil
 }
 
 //go:embed sql/select_orders.sql
 var selectOrdersQuery string
 
-func (db *DBRepository) GetAllUserOrders(ctx context.Context, userId int) ([]data.Order, error) {
-	rows, err := db.storage.Query(ctx, selectOrdersQuery, userId)
+func (db *DBRepository) GetAllUserOrders(ctx context.Context, userID int) ([]data.Order, error) {
+	rows, err := db.storage.Query(ctx, selectOrdersQuery, userID)
 	if err != nil {
 		return nil, handleSQLError(err)
 	}
@@ -129,7 +128,7 @@ func (db *DBRepository) GetAllUserOrders(ctx context.Context, userId int) ([]dat
 	result := make([]data.Order, 0)
 	for rows.Next() {
 		order := data.Order{
-			UserId: userId,
+			UserID: userID,
 		}
 		err := rows.Scan(
 			&order.OrderNumber,
@@ -180,7 +179,7 @@ func (db *DBRepository) GetOrders(ctx context.Context, limit int, allowedStatuse
 		var order data.Order
 		err := rows.Scan(
 			&order.OrderNumber,
-			&order.UserId,
+			&order.UserID,
 			&order.Accrual,
 			&order.UploadTime,
 			&order.Status,
@@ -196,9 +195,9 @@ func (db *DBRepository) GetOrders(ctx context.Context, limit int, allowedStatuse
 //go:embed sql/select_user_balance.sql
 var selectUserBalanceQuery string
 
-func (db *DBRepository) GetUserBalance(ctx context.Context, userId int) (decimal.Decimal, error) {
+func (db *DBRepository) GetUserBalance(ctx context.Context, userID int) (decimal.Decimal, error) {
 	var t *decimal.Decimal
-	err := db.storage.QueryValue(ctx, selectUserBalanceQuery, []any{userId}, []any{&t})
+	err := db.storage.QueryValue(ctx, selectUserBalanceQuery, []any{userID}, []any{&t})
 	if err != nil {
 		return decimal.Decimal{}, handleSQLError(err)
 	}
@@ -211,8 +210,8 @@ func (db *DBRepository) GetUserBalance(ctx context.Context, userId int) (decimal
 //go:embed sql/update_user_balance.sql
 var updateUserBalanceQuery string
 
-func (db *DBRepository) SetUserBalance(ctx context.Context, userId int, value decimal.Decimal) error {
-	_, err := db.storage.Exec(ctx, updateUserBalanceQuery, userId, value)
+func (db *DBRepository) SetUserBalance(ctx context.Context, userID int, value decimal.Decimal) error {
+	_, err := db.storage.Exec(ctx, updateUserBalanceQuery, userID, value)
 	if err != nil {
 		return handleSQLError(err)
 	}
@@ -222,11 +221,11 @@ func (db *DBRepository) SetUserBalance(ctx context.Context, userId int, value de
 //go:embed sql/select_order.sql
 var selectOrderQuery string
 
-func (db *DBRepository) GetOrder(ctx context.Context, orderNumber string) (userId int, status data.Status, err error) {
+func (db *DBRepository) GetOrder(ctx context.Context, orderNumber string) (userID int, status data.Status, err error) {
 	db.logger.DebugCtx(ctx, "getting order", zap.String("orderNumber", orderNumber))
-	err = db.storage.QueryValue(ctx, selectOrderQuery, []any{orderNumber}, []any{&userId, &status})
+	err = db.storage.QueryValue(ctx, selectOrderQuery, []any{orderNumber}, []any{&userID, &status})
 	if err != nil {
-		return invalidUserId, data.NullStatus, handleSQLError(err)
+		return invalidUserID, data.NullStatus, handleSQLError(err)
 	}
 	return
 }
@@ -250,9 +249,9 @@ func (db *DBRepository) SetOrderStatus(
 //go:embed sql/select_user_withdrawals_sum.sql
 var selectUserWithdrawalsSumQuery string
 
-func (db *DBRepository) GetTotalUserWithdraw(ctx context.Context, userId int) (value decimal.Decimal, err error) {
+func (db *DBRepository) GetTotalUserWithdraw(ctx context.Context, userID int) (value decimal.Decimal, err error) {
 	var t *decimal.Decimal
-	err = db.storage.QueryValue(ctx, selectUserWithdrawalsSumQuery, []any{userId}, []any{&t})
+	err = db.storage.QueryValue(ctx, selectUserWithdrawalsSumQuery, []any{userID}, []any{&t})
 	if err != nil {
 		return decimal.Zero, handleSQLError(err)
 	}
@@ -270,7 +269,7 @@ func (db *DBRepository) InsertWithdrawal(ctx context.Context, withdrawal data.Wi
 		ctx,
 		insertWithdrawalQuery,
 		withdrawal.OrderNumber,
-		withdrawal.UserId,
+		withdrawal.UserID,
 		withdrawal.Amount,
 		withdrawal.ProcessTime,
 	)
@@ -283,8 +282,8 @@ func (db *DBRepository) InsertWithdrawal(ctx context.Context, withdrawal data.Wi
 //go:embed sql/select_withdrawals.sql
 var selectWithdrawalsQuery string
 
-func (db *DBRepository) GetAllUserWithdrawals(ctx context.Context, userId int) ([]data.Withdrawal, error) {
-	rows, err := db.storage.Query(ctx, selectWithdrawalsQuery, userId)
+func (db *DBRepository) GetAllUserWithdrawals(ctx context.Context, userID int) ([]data.Withdrawal, error) {
+	rows, err := db.storage.Query(ctx, selectWithdrawalsQuery, userID)
 	if err != nil {
 		return nil, handleSQLError(err)
 	}
@@ -302,7 +301,7 @@ func (db *DBRepository) GetAllUserWithdrawals(ctx context.Context, userId int) (
 	result := make([]data.Withdrawal, 0)
 	for rows.Next() {
 		order := data.Withdrawal{
-			UserId: userId,
+			UserID: userID,
 		}
 		err := rows.Scan(
 			&order.OrderNumber,

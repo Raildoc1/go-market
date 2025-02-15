@@ -21,7 +21,7 @@ type Withdrawal struct {
 }
 
 type WithdrawalsGettingService interface {
-	GetAllUserWithdrawals(ctx context.Context, userId int) ([]service.Withdrawal, error)
+	GetAllUserWithdrawals(ctx context.Context, userID int) ([]service.Withdrawal, error)
 }
 
 func NewWithdrawalsGettingHandler(service WithdrawalsGettingService, logger *logging.ZapLogger) *WithdrawalsGettingHandler {
@@ -32,13 +32,13 @@ func NewWithdrawalsGettingHandler(service WithdrawalsGettingService, logger *log
 }
 
 func (h *WithdrawalsGettingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userId, err := userIdFromCtx(r.Context())
+	userID, err := userIdFromCtx(r.Context())
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	withdrawals, err := h.service.GetAllUserWithdrawals(r.Context(), userId)
+	withdrawals, err := h.service.GetAllUserWithdrawals(r.Context(), userID)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "Error getting orders", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)

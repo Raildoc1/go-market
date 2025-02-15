@@ -1,6 +1,7 @@
 package jwtfactory
 
 import (
+	"fmt"
 	"github.com/go-chi/jwtauth/v5"
 	"time"
 )
@@ -27,5 +28,5 @@ func (tf *TokenFactory) Generate(extraClaims map[string]string) (string, error) 
 		claims[k] = v
 	}
 	_, tokenString, err := tf.tokenAuth.Encode(claims)
-	return tokenString, err
+	return tokenString, fmt.Errorf("failed to generate token: %w", err)
 }

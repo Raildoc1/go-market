@@ -31,7 +31,7 @@ func NewAccrualSystem(cfg Config, logger *logging.ZapLogger) *AccrualSystem {
 }
 
 func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string) (accrualsystemprotocol.Order, error) {
-	url := fmt.Sprintf("%s/api/orders/{number}", as.cfg.ServerAddress)
+	url := as.cfg.ServerAddress + "/api/orders/{number}"
 	resp, err := resty.
 		New().
 		R().
@@ -39,7 +39,7 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 		SetPathParam("number", orderNumber).
 		Get(url)
 	if err != nil {
-		return accrualsystemprotocol.Order{}, err
+		return accrualsystemprotocol.Order{}, fmt.Errorf("get request failed: %w", err)
 	}
 	statusCode := resp.StatusCode()
 	switch statusCode {
@@ -52,7 +52,7 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 		err := json.Unmarshal(resp.Body(), &res)
 		if err != nil {
 			as.logger.ErrorCtx(ctx, "Error unmarshalling order response", zap.Error(err))
-			return accrualsystemprotocol.Order{}, err
+			return accrualsystemprotocol.Order{}, fmt.Errorf("error unmarshalling order response: %w", err)
 		}
 		as.logger.DebugCtx(ctx, "Order found", zap.Any("order", res))
 		return res, nil

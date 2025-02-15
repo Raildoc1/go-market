@@ -21,13 +21,13 @@ type TransactionManager interface {
 
 type OrdersRepository interface {
 	GetOrders(ctx context.Context, limit int, allowedStatuses ...data.Status) ([]data.Order, error)
-	GetOrder(ctx context.Context, orderNumber string) (userId int, status data.Status, err error)
+	GetOrder(ctx context.Context, orderNumber string) (userID int, status data.Status, err error)
 	SetOrderStatus(ctx context.Context, orderNumber string, accrual decimal.Decimal, status data.Status) error
 }
 
 type BonusPointsRepository interface {
-	GetUserBalance(ctx context.Context, userId int) (decimal.Decimal, error)
-	SetUserBalance(ctx context.Context, userId int, value decimal.Decimal) error
+	GetUserBalance(ctx context.Context, userID int) (decimal.Decimal, error)
+	SetUserBalance(ctx context.Context, userID int, value decimal.Decimal) error
 }
 
 type AccrualSystem interface {
@@ -157,7 +157,7 @@ func (om *OrdersMonitor) worker(orderNumberChan <-chan string) {
 
 func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 	return om.transactionManager.DoWithTransaction(context.Background(), func(ctx context.Context) error {
-		userId, status, err := om.orderStatusRepository.GetOrder(ctx, orderNumber)
+		userID, status, err := om.orderStatusRepository.GetOrder(ctx, orderNumber)
 		if err != nil {
 			return fmt.Errorf("failed to get order: %w", err)
 		}
@@ -184,7 +184,7 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 		case accrualsystemprotocol.Processing:
 			return om.orderStatusRepository.SetOrderStatus(ctx, orderNumber, decimal.Zero, data.ProcessingStatus)
 		case accrualsystemprotocol.Processed:
-			currentPoints, err := om.bonusPointsRepository.GetUserBalance(ctx, userId)
+			currentPoints, err := om.bonusPointsRepository.GetUserBalance(ctx, userID)
 			if err != nil {
 				return fmt.Errorf("failed to get current bonus points: %w", err)
 			}
@@ -195,7 +195,7 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 				zap.Any("currentPoints", newBalance),
 				zap.Any("newBalance", newBalance),
 			)
-			err = om.bonusPointsRepository.SetUserBalance(ctx, userId, newBalance)
+			err = om.bonusPointsRepository.SetUserBalance(ctx, userID, newBalance)
 			if err != nil {
 				return fmt.Errorf("failed to set current bonus points: %w", err)
 			}

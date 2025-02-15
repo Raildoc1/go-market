@@ -17,7 +17,7 @@ type OrderLoadingHandler struct {
 }
 
 type OrderLoadingService interface {
-	RegisterOrder(ctx context.Context, userId int, orderNumber string) error
+	RegisterOrder(ctx context.Context, userID int, orderNumber string) error
 }
 
 func NewOrderLoadingHandler(service OrderLoadingService, logger *logging.ZapLogger) *OrderLoadingHandler {
@@ -50,13 +50,13 @@ func (h *OrderLoadingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
-	userId, err := userIdFromCtx(r.Context())
+	userID, err := userIdFromCtx(r.Context())
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	err = h.service.RegisterOrder(r.Context(), userId, orderNumber)
+	err = h.service.RegisterOrder(r.Context(), userID, orderNumber)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrOrderRegistered):

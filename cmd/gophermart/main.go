@@ -34,7 +34,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	jsCfg, err := json.Marshal(cfg)
+	jsCfg, err := json.Marshal(cfg) //nolint:musttag // marshalling for debug
 	if err != nil {
 		logger.ErrorCtx(context.Background(), "Failed to marshal configuration", zap.Error(err))
 		return
@@ -62,7 +62,14 @@ func main() {
 	accrualSystem := accrualsystem.NewAccrualSystem(cfg.AccrualSystem, logger)
 
 	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, orders, wallet, logger)
-	ordersMonitor := ordersmonitor.NewOrdersMonitor(cfg.OrdersMonitor, repository, repository, transactionManager, accrualSystem, logger)
+	ordersMonitor := ordersmonitor.NewOrdersMonitor(
+		cfg.OrdersMonitor,
+		repository,
+		repository,
+		transactionManager,
+		accrualSystem,
+		logger,
+	)
 
 	rootCtx, cancelCtx := signal.NotifyContext(
 		context.Background(),

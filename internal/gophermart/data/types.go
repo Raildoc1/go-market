@@ -17,7 +17,7 @@ const (
 
 type Order struct {
 	OrderNumber string
-	UserId      int
+	UserID      int
 	Accrual     decimal.Decimal
 	Status      Status
 	UploadTime  time.Time
@@ -25,7 +25,7 @@ type Order struct {
 
 type Withdrawal struct {
 	OrderNumber string
-	UserId      int
+	UserID      int
 	Amount      decimal.Decimal
 	ProcessTime time.Time
 }

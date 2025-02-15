@@ -18,8 +18,8 @@ var (
 )
 
 type UserRepository interface {
-	InsertUser(ctx context.Context, login, password string) (userId int, err error)
-	ValidateUser(ctx context.Context, login, password string) (userId int, err error)
+	InsertUser(ctx context.Context, login, password string) (userID int, err error)
+	ValidateUser(ctx context.Context, login, password string) (userID int, err error)
 }
 
 type TokenFactory interface {
@@ -45,7 +45,7 @@ func NewAuthorization(
 }
 
 func (r *Authorization) Register(ctx context.Context, login string, password string) (string, error) {
-	userId, err := r.userRepository.InsertUser(ctx, login, password)
+	userID, err := r.userRepository.InsertUser(ctx, login, password)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrUniqueConstraintViolation):
@@ -56,7 +56,7 @@ func (r *Authorization) Register(ctx context.Context, login string, password str
 	}
 
 	payload := map[string]string{
-		UserIdClaimName: strconv.Itoa(userId),
+		UserIdClaimName: strconv.Itoa(userID),
 	}
 	token, err := r.tokenFactory.Generate(payload)
 	if err != nil {
@@ -67,7 +67,7 @@ func (r *Authorization) Register(ctx context.Context, login string, password str
 }
 
 func (r *Authorization) Login(ctx context.Context, login string, password string) (string, error) {
-	userId, err := r.userRepository.ValidateUser(ctx, login, password)
+	userID, err := r.userRepository.ValidateUser(ctx, login, password)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrInvalidPassword):
@@ -80,7 +80,7 @@ func (r *Authorization) Login(ctx context.Context, login string, password string
 	}
 
 	payload := map[string]string{
-		UserIdClaimName: strconv.Itoa(userId),
+		UserIdClaimName: strconv.Itoa(userID),
 	}
 	token, err := r.tokenFactory.Generate(payload)
 	if err != nil {

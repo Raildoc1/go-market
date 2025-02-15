@@ -17,7 +17,7 @@ type WithdrawRequesterHandler struct {
 }
 
 type WithdrawRequesterService interface {
-	Withdraw(ctx context.Context, userId int, orderNumber string, amount decimal.Decimal) error
+	Withdraw(ctx context.Context, userID int, orderNumber string, amount decimal.Decimal) error
 }
 
 type WithdrawalRequest struct {
@@ -33,7 +33,7 @@ func NewWithdrawRequesterHandler(service WithdrawRequesterService, logger *loggi
 }
 
 func (h *WithdrawRequesterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userId, err := userIdFromCtx(r.Context())
+	userID, err := userIdFromCtx(r.Context())
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -53,7 +53,7 @@ func (h *WithdrawRequesterHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = h.service.Withdraw(r.Context(), userId, request.OrderNumber, request.Amount)
+	err = h.service.Withdraw(r.Context(), userID, request.OrderNumber, request.Amount)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrNotEnoughBalance):

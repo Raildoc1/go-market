@@ -10,11 +10,12 @@ func lunh(s []byte) bool {
 	parity := n % 2
 	for i := range n - 1 {
 		digit := int(s[i] - '0')
-		if i%2 != parity {
+		switch {
+		case i%2 != parity:
 			sum += digit
-		} else if digit > 4 {
+		case digit > 4:
 			sum += 2*digit - 9
-		} else {
+		default:
 			sum += 2 * digit
 		}
 	}

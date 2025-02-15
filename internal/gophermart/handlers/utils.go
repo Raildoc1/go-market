@@ -27,20 +27,20 @@ func decodeJSON[T any](r io.Reader) (T, error) {
 	return out, err
 }
 
-func userIdFromCtx(ctx context.Context) (userId int, err error) {
+func userIdFromCtx(ctx context.Context) (userID int, err error) {
 	_, claims, _ := jwtauth.FromContext(ctx)
-	return strconv.Atoi(claims[service.UserIdClaimName].(string))
+	return strconv.Atoi(claims[service.UserIdClaimName].(string)) //nolint:errcheck // unnecessary
 }
 
 func tryWriteResponseJSON(w http.ResponseWriter, responseItem any) error {
 	res, err := json.Marshal(responseItem)
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck // unnecessary
 	}
 	w.Header().Add("Content-Type", "application/json")
 	_, err = w.Write(res)
 	if err != nil {
-		return err
+		return err //nolint:wrapcheck // unnecessary
 	}
 	return nil
 }

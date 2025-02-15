@@ -9,7 +9,9 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-const zapFieldsKey = "zapFields"
+type CtxField string
+
+const zapFieldsKey = CtxField("zapFields")
 
 type ZapFields map[string]zap.Field
 
@@ -38,7 +40,7 @@ func NewZapLogger(level zapcore.Level) (*ZapLogger, error) {
 
 	l, err := settings.config.Build(settings.opts...)
 	if err != nil {
-		return nil, err
+		return nil, err //nolint:wrapcheck // unnecessary
 	}
 
 	return &ZapLogger{
@@ -86,7 +88,7 @@ func withCtxFields(ctx context.Context, fields ...zap.Field) []zap.Field {
 
 	fs = fs.Append(fields...)
 
-	var maskedFields []zap.Field
+	maskedFields := make([]zap.Field, 0, len(fs))
 	for _, f := range fs {
 		maskedFields = append(maskedFields, maskField(f))
 	}

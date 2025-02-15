@@ -85,7 +85,6 @@ func createMux(
 	walletService WalletService,
 	logger *logging.ZapLogger,
 ) *chi.Mux {
-
 	registrationHandler := handlers.NewRegisterHandler(authorizationService, logger)
 	authorizationHandler := handlers.NewAuthorizationHandler(authorizationService, logger)
 	orderLoadingHandler := handlers.NewOrderLoadingHandler(ordersService, logger)

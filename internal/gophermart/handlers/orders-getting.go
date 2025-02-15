@@ -23,7 +23,7 @@ type Order struct {
 }
 
 type OrderGettingService interface {
-	GetAllOrders(ctx context.Context, userId int) ([]service.Order, error)
+	GetAllOrders(ctx context.Context, userID int) ([]service.Order, error)
 }
 
 func NewOrderGettingHandler(service OrderGettingService, logger *logging.ZapLogger) *OrderGettingHandler {
@@ -34,13 +34,13 @@ func NewOrderGettingHandler(service OrderGettingService, logger *logging.ZapLogg
 }
 
 func (h *OrderGettingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userId, err := userIdFromCtx(r.Context())
+	userID, err := userIdFromCtx(r.Context())
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	orders, err := h.service.GetAllOrders(r.Context(), userId)
+	orders, err := h.service.GetAllOrders(r.Context(), userID)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "Error getting orders", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)

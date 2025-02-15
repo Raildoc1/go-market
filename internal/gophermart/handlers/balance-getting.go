@@ -20,7 +20,7 @@ type BalanceGettingHandler struct {
 }
 
 type BalanceGettingService interface {
-	GetUserBalanceInfo(ctx context.Context, userId int) (service.BalanceInfo, error)
+	GetUserBalanceInfo(ctx context.Context, userID int) (service.BalanceInfo, error)
 }
 
 func NewBalanceGettingHandler(service BalanceGettingService, logger *logging.ZapLogger) *BalanceGettingHandler {
@@ -31,13 +31,13 @@ func NewBalanceGettingHandler(service BalanceGettingService, logger *logging.Zap
 }
 
 func (h *BalanceGettingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	userId, err := userIdFromCtx(r.Context())
+	userID, err := userIdFromCtx(r.Context())
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "Failed to recover user id", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	balanceInfo, err := h.service.GetUserBalanceInfo(r.Context(), userId)
+	balanceInfo, err := h.service.GetUserBalanceInfo(r.Context(), userID)
 	if err != nil {
 		h.logger.ErrorCtx(r.Context(), "Failed to get user balance info", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)

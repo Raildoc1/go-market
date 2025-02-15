@@ -1,28 +1,23 @@
 package lunh
 
 func Validate(number string) bool {
-	return true
-	// return lunh([]byte(number))
+	return lunh([]byte(number))
 }
 
 func lunh(s []byte) bool {
 	n := len(s)
-	number := 0
-	result := 0
-	for i := 0; i < n; i++ {
-		number = int(s[i]) - '0'
-		if number < 0 || number > 9 {
-			return false
+	sum := 0
+	parity := n % 2
+	for i := range n - 1 {
+		digit := int(s[i] - '0')
+		if i%2 != parity {
+			sum += digit
+		} else if digit > 4 {
+			sum += 2*digit - 9
+		} else {
+			sum += 2 * digit
 		}
-		if i%2 != 0 {
-			result += number
-			continue
-		}
-		number *= 2
-		if number > 9 {
-			number -= 9
-		}
-		result += number
 	}
-	return result%10 == 0
+	lastDigit := int(s[n-1] - '0')
+	return lastDigit == (10-sum%10)%10
 }

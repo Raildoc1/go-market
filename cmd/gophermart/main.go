@@ -33,7 +33,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	restyLogger := accrualsystem.NewRestyLogger(logger.Raw())
 
 	jsCfg, err := json.Marshal(cfg)
 	if err != nil {
@@ -60,7 +59,7 @@ func main() {
 	authorization := service.NewAuthorization(repository, transactionManager, tokenFactory)
 	orders := service.NewOrders(transactionManager, repository)
 	wallet := service.NewWallet(transactionManager, repository, logger)
-	accrualSystem := accrualsystem.NewAccrualSystem(cfg.AccrualSystem, restyLogger)
+	accrualSystem := accrualsystem.NewAccrualSystem(cfg.AccrualSystem, logger)
 
 	server := gophermart.NewServer(cfg.Server, tokenAuth, authorization, orders, wallet, logger)
 	ordersMonitor := ordersmonitor.NewOrdersMonitor(cfg.OrdersMonitor, repository, repository, transactionManager, accrualSystem, logger)

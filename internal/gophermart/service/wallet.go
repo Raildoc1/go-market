@@ -5,6 +5,8 @@ import (
 	"errors"
 	"github.com/shopspring/decimal"
 	"go-market/internal/gophermart/data"
+	"go-market/pkg/logging"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -34,12 +36,14 @@ type BalanceRepository interface {
 type Wallet struct {
 	transactionManager TransactionManager
 	repository         BalanceRepository
+	logger             *logging.ZapLogger
 }
 
-func NewWallet(transactionManager TransactionManager, repository BalanceRepository) *Wallet {
+func NewWallet(transactionManager TransactionManager, repository BalanceRepository, logger *logging.ZapLogger) *Wallet {
 	return &Wallet{
 		transactionManager: transactionManager,
 		repository:         repository,
+		logger:             logger,
 	}
 }
 
@@ -65,6 +69,13 @@ func (w *Wallet) GetUserBalanceInfo(ctx context.Context, userId int) (BalanceInf
 }
 
 func (w *Wallet) Withdraw(ctx context.Context, userId int, orderNumber string, amount decimal.Decimal) error {
+	w.logger.DebugCtx(
+		ctx,
+		"withdraw",
+		zap.Int("userId", userId),
+		zap.String("orderNumber", orderNumber),
+		zap.String("amount", amount.String()),
+	)
 	return w.transactionManager.DoWithTransaction(ctx, func(ctx context.Context) error {
 		balance, err := w.repository.GetUserBalance(ctx, userId)
 		if err != nil {

@@ -4,6 +4,7 @@ func Validate(number string) bool {
 	return lunh([]byte(number))
 }
 
+//nolint:gomnd // unnecessary
 func lunh(s []byte) bool {
 	n := len(s)
 	sum := 0

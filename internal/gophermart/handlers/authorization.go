@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
-	"go-market/internal/gophermart/service"
+	servicePackage "go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"net/http"
 
@@ -44,7 +44,7 @@ func (h *AuthorizationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	tkn, err := h.service.Login(r.Context(), input.Login, input.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrInvalidCredentials):
+		case errors.Is(err, servicePackage.ErrInvalidCredentials):
 			h.logger.DebugCtx(r.Context(), err.Error(), zap.Any("input", input))
 			w.WriteHeader(http.StatusUnauthorized)
 			return

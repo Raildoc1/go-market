@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
-	"go-market/internal/gophermart/service"
+	servicePackage "go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go-market/pkg/lunh"
 	"net/http"
@@ -60,7 +60,7 @@ func (h *WithdrawRequesterHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	err = h.service.Withdraw(r.Context(), userID, request.OrderNumber, request.Amount)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrNotEnoughBalance):
+		case errors.Is(err, servicePackage.ErrNotEnoughBalance):
 			h.logger.DebugCtx(r.Context(), "", zap.Error(err))
 			w.WriteHeader(http.StatusPaymentRequired)
 			return

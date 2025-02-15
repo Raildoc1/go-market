@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
-	"go-market/internal/gophermart/service"
+	servicePackage "go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go-market/pkg/lunh"
 	"io"
@@ -60,10 +60,10 @@ func (h *OrderLoadingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	err = h.service.RegisterOrder(r.Context(), userID, orderNumber)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrOrderRegistered):
+		case errors.Is(err, servicePackage.ErrOrderRegistered):
 			w.WriteHeader(http.StatusOK)
 			return
-		case errors.Is(err, service.ErrOrderRegisteredByAnotherUser):
+		case errors.Is(err, servicePackage.ErrOrderRegisteredByAnotherUser):
 			h.logger.DebugCtx(r.Context(), "Failed to register order", zap.Error(err))
 			w.WriteHeader(http.StatusConflict)
 			return

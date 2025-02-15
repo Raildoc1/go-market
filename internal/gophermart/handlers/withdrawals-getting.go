@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"go-market/internal/gophermart/service"
+	servicePackage "go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"net/http"
 	"time"
@@ -22,7 +22,7 @@ type Withdrawal struct {
 }
 
 type WithdrawalsGettingService interface {
-	GetAllUserWithdrawals(ctx context.Context, userID int) ([]service.Withdrawal, error)
+	GetAllUserWithdrawals(ctx context.Context, userID int) ([]servicePackage.Withdrawal, error)
 }
 
 func NewWithdrawalsGettingHandler(

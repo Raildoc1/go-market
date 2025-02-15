@@ -152,6 +152,7 @@ func (db *DBRepository) GetOrders(
 ) ([]data.Order, error) {
 	query := "SELECT number, user_id, accrual, upload_time, status FROM orders"
 	if len(allowedStatuses) > 0 {
+		//nolint:gomnd // param number start with 2 because 1st is taken by limit
 		query += fmt.Sprintf(" WHERE status IN (%s)", formatParams(2, len(allowedStatuses)))
 	}
 	if limit > 0 {

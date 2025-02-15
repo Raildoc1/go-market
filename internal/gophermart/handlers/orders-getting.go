@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"go-market/internal/common/clientprotocol"
-	"go-market/internal/gophermart/service"
+	servicePackage "go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"net/http"
 	"time"
@@ -24,7 +24,7 @@ type Order struct {
 }
 
 type OrderGettingService interface {
-	GetAllOrders(ctx context.Context, userID int) ([]service.Order, error)
+	GetAllOrders(ctx context.Context, userID int) ([]servicePackage.Order, error)
 }
 
 func NewOrderGettingHandler(service OrderGettingService, logger *logging.ZapLogger) *OrderGettingHandler {

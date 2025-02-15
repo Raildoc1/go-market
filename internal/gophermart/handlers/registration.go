@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
-	"go-market/internal/gophermart/service"
+	servicePackage "go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"net/http"
 
@@ -44,7 +44,7 @@ func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	tkn, err := h.service.Register(r.Context(), input.Login, input.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrLoginTaken):
+		case errors.Is(err, servicePackage.ErrLoginTaken):
 			h.logger.DebugCtx(r.Context(), err.Error(), zap.String("login", input.Login))
 			w.WriteHeader(http.StatusConflict)
 			return

@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"go-market/internal/gophermart/service"
+	servicePackage "go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"net/http"
 
@@ -21,7 +21,7 @@ type BalanceGettingHandler struct {
 }
 
 type BalanceGettingService interface {
-	GetUserBalanceInfo(ctx context.Context, userID int) (service.BalanceInfo, error)
+	GetUserBalanceInfo(ctx context.Context, userID int) (servicePackage.BalanceInfo, error)
 }
 
 func NewBalanceGettingHandler(service BalanceGettingService, logger *logging.ZapLogger) *BalanceGettingHandler {

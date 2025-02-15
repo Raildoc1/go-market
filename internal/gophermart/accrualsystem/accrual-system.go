@@ -35,7 +35,7 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 		R().
 		SetLogger(as.logger).
 		SetContext(ctx).
-		SetQueryParam("number", orderNumber).
+		SetPathParam("number", orderNumber).
 		Get(url)
 	if err != nil {
 		return accrualsystemprotocol.Order{}, err

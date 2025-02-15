@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"go-market/internal/common/accrualsystemprotocol"
 	"go-market/pkg/logging"
+	"net/http"
 
 	"github.com/go-resty/resty/v2"
 	"go.uber.org/zap"
@@ -44,10 +45,10 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 	}
 	statusCode := resp.StatusCode()
 	switch statusCode {
-	case 204:
+	case http.StatusNoContent:
 		as.logger.DebugCtx(ctx, "No order found")
 		return accrualsystemprotocol.Order{}, ErrNoOrderFound
-	case 200:
+	case http.StatusOK:
 		as.logger.DebugCtx(ctx, "Order found")
 		res := accrualsystemprotocol.Order{}
 		err := json.Unmarshal(resp.Body(), &res)

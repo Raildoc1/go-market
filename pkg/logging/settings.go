@@ -5,6 +5,11 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+const (
+	initialSampling    = 100
+	thereafterSampling = 100
+)
+
 type settings struct {
 	config *zap.Config
 	opts   []zap.Option
@@ -15,8 +20,8 @@ func defaultSettings(level zap.AtomicLevel) *settings {
 		Level:       level,
 		Development: false,
 		Sampling: &zap.SamplingConfig{
-			Initial:    100,
-			Thereafter: 100,
+			Initial:    initialSampling,
+			Thereafter: thereafterSampling,
 		},
 		Encoding: "json",
 		EncoderConfig: zapcore.EncoderConfig{

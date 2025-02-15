@@ -67,7 +67,7 @@ func maskField(f zap.Field) zap.Field {
 	if f.Key == "email" {
 		email := f.String
 		parts := strings.Split(email, "@")
-		if len(parts) == 2 {
+		if len(parts) == 2 { //nolint:gomnd // unnecessary
 			return zap.String(f.Key, "***@"+parts[1])
 		}
 	}

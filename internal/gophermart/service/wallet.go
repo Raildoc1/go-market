@@ -21,9 +21,9 @@ type BalanceInfo struct {
 }
 
 type Withdrawal struct {
+	ProcessTime time.Time
 	OrderNumber string
 	Amount      decimal.Decimal
-	ProcessTime time.Time
 }
 
 type BalanceRepository interface {

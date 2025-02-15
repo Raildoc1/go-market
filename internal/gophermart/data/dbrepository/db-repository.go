@@ -79,7 +79,7 @@ func (db *DBRepository) ValidateUser(ctx context.Context, login, password string
 //go:embed sql/insert_order.sql
 var insertOrderQuery string
 
-func (db *DBRepository) InsertOrder(ctx context.Context, order data.Order) error {
+func (db *DBRepository) InsertOrder(ctx context.Context, order *data.Order) error {
 	_, err := db.storage.Exec(
 		ctx,
 		insertOrderQuery,
@@ -144,7 +144,11 @@ func (db *DBRepository) GetAllUserOrders(ctx context.Context, userID int) ([]dat
 	return result, nil
 }
 
-func (db *DBRepository) GetOrders(ctx context.Context, limit int, allowedStatuses ...data.Status) ([]data.Order, error) {
+func (db *DBRepository) GetOrders(
+	ctx context.Context,
+	limit int,
+	allowedStatuses ...data.Status,
+) ([]data.Order, error) {
 	query := "SELECT number, user_id, accrual, upload_time, status FROM orders"
 	if len(allowedStatuses) > 0 {
 		query += fmt.Sprintf(" WHERE status IN (%s)", formatParams(2, len(allowedStatuses)))

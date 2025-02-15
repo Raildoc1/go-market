@@ -23,12 +23,12 @@ const (
 )
 
 type Config struct {
-	Server          gophermart.Config
-	JWTConfig       JWTConfig
 	DB              database.Config
-	ShutdownTimeout time.Duration
-	OrdersMonitor   ordersmonitor.Config
 	AccrualSystem   accrualsystem.Config
+	JWTConfig       JWTConfig
+	Server          gophermart.Config
+	OrdersMonitor   ordersmonitor.Config
+	ShutdownTimeout time.Duration
 }
 
 type JWTConfig struct {

@@ -15,9 +15,9 @@ type WithdrawalsGettingHandler struct {
 }
 
 type Withdrawal struct {
+	ProcessTime time.Time `json:"processed_at"`
 	OrderNumber string    `json:"order"`
 	Amount      float64   `json:"sum"`
-	ProcessTime time.Time `json:"processed_at"`
 }
 
 type WithdrawalsGettingService interface {

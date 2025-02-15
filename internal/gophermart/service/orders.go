@@ -16,10 +16,10 @@ var (
 )
 
 type Order struct {
+	UploadedAt time.Time
 	Number     string
 	Status     clientprotocol.OrderStatus
 	Accrual    decimal.Decimal
-	UploadedAt time.Time
 }
 
 type Orders struct {
@@ -28,7 +28,7 @@ type Orders struct {
 }
 
 type OrderRepository interface {
-	InsertOrder(ctx context.Context, order data.Order) error
+	InsertOrder(ctx context.Context, order *data.Order) error
 	GetOrderOwner(ctx context.Context, orderNumber string) (userID int, err error)
 	GetAllUserOrders(ctx context.Context, userID int) ([]data.Order, error)
 }
@@ -41,7 +41,7 @@ func NewOrders(transactionManager TransactionManager, orderRepository OrderRepos
 }
 
 func (o *Orders) RegisterOrder(ctx context.Context, userID int, orderNumber string) error {
-	order := data.Order{
+	order := &data.Order{
 		UserID:      userID,
 		OrderNumber: orderNumber,
 		Status:      data.NewStatus,

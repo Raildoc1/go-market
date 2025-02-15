@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go-market/internal/gophermart/service"
 	"go-market/pkg/logging"
 	"go.uber.org/zap"
@@ -55,5 +54,5 @@ func (h *AuthorizationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", tkn))
+	w.Header().Set("Authorization", "Bearer "+tkn)
 }

@@ -28,5 +28,8 @@ func (tf *TokenFactory) Generate(extraClaims map[string]string) (string, error) 
 		claims[k] = v
 	}
 	_, tokenString, err := tf.tokenAuth.Encode(claims)
-	return tokenString, fmt.Errorf("failed to generate token: %w", err)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate token: %w", err)
+	}
+	return tokenString, nil
 }

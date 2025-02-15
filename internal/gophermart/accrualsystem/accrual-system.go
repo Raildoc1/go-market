@@ -19,8 +19,8 @@ type Config struct {
 	ServerAddress string
 }
 type AccrualSystem struct {
-	cfg    Config
 	logger *logging.ZapLogger
+	cfg    Config
 }
 
 func NewAccrualSystem(cfg Config, logger *logging.ZapLogger) *AccrualSystem {

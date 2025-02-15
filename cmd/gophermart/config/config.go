@@ -90,7 +90,7 @@ func Load() (*Config, error) {
 			TasksBufferLength: 10,
 		},
 		AccrualSystem: accrualsystem.Config{
-			ServerAddress: "localhost:8080",
+			ServerAddress: *accrualSystemAddress,
 		},
 	}, nil
 }

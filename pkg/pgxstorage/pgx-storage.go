@@ -136,8 +136,8 @@ func queryWithRetry[T any](
 }
 
 func needRetry(err error) bool {
-	if err != nil {
-		return true
+	if err == nil {
+		return false
 	}
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {

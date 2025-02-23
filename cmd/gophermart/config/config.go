@@ -28,6 +28,8 @@ const (
 	defaultTickPeriod      = 3 * time.Second
 )
 
+var defaultRetryAttempts = []time.Duration{time.Second, 3 * time.Second, 5 * time.Second}
+
 type Config struct {
 	DB              database.Config
 	AccrualSystem   accrualsystem.Config
@@ -96,7 +98,8 @@ func Load() (*Config, error) {
 			TasksBufferLength: defaultTaskBufferLength,
 		},
 		AccrualSystem: accrualsystem.Config{
-			ServerAddress: *accrualSystemAddress,
+			ServerAddress:      *accrualSystemAddress,
+			RetryAttemptDelays: defaultRetryAttempts,
 		},
 	}, nil
 }

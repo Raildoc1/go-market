@@ -24,7 +24,7 @@ var (
 
 type Config struct {
 	ServerAddress      string
-	retryAttemptDelays []time.Duration
+	RetryAttemptDelays []time.Duration
 }
 
 type AccrualSystem struct {
@@ -49,13 +49,7 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 	if time.Now().Before(as.remoteServiceAwakeTime.Get()) {
 		return accrualsystemprotocol.Order{}, ErrTooManyRequests
 	}
-	url := as.cfg.ServerAddress + "/api/orders/{number}"
-	resp, err := resty.
-		New().
-		R().
-		SetContext(ctx).
-		SetPathParam("number", orderNumber).
-		Get(url)
+	resp, err := as.getOrderWithRetry(ctx, orderNumber)
 	if err != nil {
 		return accrualsystemprotocol.Order{}, fmt.Errorf("get request failed: %w", err)
 	}
@@ -92,10 +86,10 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 	}
 }
 
-func (as *AccrualSystem) sendRequestWithRetry(ctx context.Context, orderNumber string) (*resty.Response, error) {
+func (as *AccrualSystem) getOrderWithRetry(ctx context.Context, orderNumber string) (*resty.Response, error) {
 	return timeutils.Retry[*resty.Response](
 		ctx,
-		as.cfg.retryAttemptDelays,
+		as.cfg.RetryAttemptDelays,
 		func(ctx context.Context) (*resty.Response, error) {
 			return as.getOrder(ctx, orderNumber)
 		},
@@ -106,6 +100,7 @@ func (as *AccrualSystem) sendRequestWithRetry(ctx context.Context, orderNumber s
 	)
 }
 
+//nolint:wrapcheck // wrapping unnecessary
 func (as *AccrualSystem) getOrder(ctx context.Context, orderNumber string) (*resty.Response, error) {
 	url := as.cfg.ServerAddress + "/api/orders/{number}"
 	return resty.

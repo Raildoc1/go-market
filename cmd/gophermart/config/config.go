@@ -89,7 +89,8 @@ func Load() (*Config, error) {
 			ExpirationTime: time.Hour,
 		},
 		DB: database.Config{
-			ConnectionString: *dbConnectionString,
+			ConnectionString:   *dbConnectionString,
+			RetryAttemptDelays: defaultRetryAttempts,
 		},
 		ShutdownTimeout: defaultShutdownTimeout,
 		OrdersMonitor: ordersmonitor.Config{

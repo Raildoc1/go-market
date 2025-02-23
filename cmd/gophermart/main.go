@@ -42,12 +42,8 @@ func main() {
 	}
 	logger.InfoCtx(context.Background(), "Configuration", zap.String("config", string(jsCfg)))
 
-	dbFactory := database.NewPgxDatabaseFactory(
-		database.Config{
-			ConnectionString: cfg.DB.ConnectionString,
-		},
-	)
-	storage, err := pgxstorage.New(dbFactory)
+	dbFactory := database.NewPgxDatabaseFactory(cfg.DB)
+	storage, err := pgxstorage.New(dbFactory, cfg.DB.RetryAttemptDelays)
 	if err != nil {
 		log.Fatal(err)
 	}

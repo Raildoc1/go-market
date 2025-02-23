@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -14,7 +15,8 @@ import (
 )
 
 type Config struct {
-	ConnectionString string
+	ConnectionString   string
+	RetryAttemptDelays []time.Duration
 }
 
 type PgxDatabaseFactory struct {

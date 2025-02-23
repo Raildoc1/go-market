@@ -1,14 +1,5 @@
 BEGIN TRANSACTION;
 
--- ALTER TABLE withdrawals
--- ADD COLUMN amount_tmp DECIMAL(16, 3);
---
--- UPDATE withdrawals
--- SET amount_tmp = cast(amount as DECIMAL(16, 3));
---
--- ALTER TABLE withdrawals
--- DROP COLUMN amount;
-
 ALTER TABLE withdrawals
     ALTER COLUMN amount TYPE DECIMAL(16, 3);
 

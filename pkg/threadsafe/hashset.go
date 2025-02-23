@@ -4,13 +4,13 @@ import "sync"
 
 type HashSet[T int | string] struct {
 	inner map[T]struct{}
-	mux   *sync.RWMutex
+	mux   *sync.Mutex
 }
 
 func NewHashSet[T int | string]() *HashSet[T] {
 	return &HashSet[T]{
 		inner: make(map[T]struct{}),
-		mux:   &sync.RWMutex{},
+		mux:   &sync.Mutex{},
 	}
 }
 
@@ -35,8 +35,8 @@ func (h *HashSet[T]) Remove(item T) bool {
 }
 
 func (h *HashSet[T]) Contains(item T) bool {
-	h.mux.RLock()
-	defer h.mux.RUnlock()
+	h.mux.Lock()
+	defer h.mux.Unlock()
 	_, ok := h.inner[item]
 	return ok
 }

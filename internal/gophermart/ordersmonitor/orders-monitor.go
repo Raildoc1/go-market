@@ -32,6 +32,7 @@ type BonusPointsRepository interface {
 }
 
 type AccrualSystem interface {
+	GetServiceAwakeTime() time.Time
 	GetOrderStatus(ctx context.Context, orderNumber string) (accrualsystemprotocol.Order, error)
 }
 
@@ -170,7 +171,7 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 		case data.NullStatus:
 			return errors.New("invalid order status")
 		}
-		remoteOrder, err := om.accrualSystem.GetOrderStatus(ctx, orderNumber)
+		remoteOrder, err := om.getRemoteOrder(ctx, orderNumber)
 		if err != nil {
 			switch {
 			case errors.Is(err, accrualsystem.ErrNoOrderFound):
@@ -213,4 +214,28 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 		}
 		return nil
 	})
+}
+
+func (om *OrdersMonitor) getRemoteOrder(ctx context.Context, orderNumber string) (accrualsystemprotocol.Order, error) {
+	for {
+		if ctx.Err() != nil {
+			return accrualsystemprotocol.Order{}, ctx.Err()
+		}
+		remoteOrder, err := om.accrualSystem.GetOrderStatus(ctx, orderNumber)
+		if err != nil {
+			switch {
+			case errors.Is(err, accrualsystem.ErrTooManyRequests):
+				timeToWait := om.accrualSystem.GetServiceAwakeTime().Sub(time.Now())
+				select {
+				case <-ctx.Done():
+					return accrualsystemprotocol.Order{}, ctx.Err()
+				case <-time.After(timeToWait):
+					continue
+				}
+			default:
+				return accrualsystemprotocol.Order{}, err
+			}
+		}
+		return remoteOrder, nil
+	}
 }

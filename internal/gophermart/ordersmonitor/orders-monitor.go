@@ -216,6 +216,7 @@ func (om *OrdersMonitor) handleOrder(orderNumber string) error {
 	})
 }
 
+//nolint:wrapcheck // wrapping unnecessary
 func (om *OrdersMonitor) getRemoteOrder(ctx context.Context, orderNumber string) (accrualsystemprotocol.Order, error) {
 	for {
 		if ctx.Err() != nil {
@@ -225,7 +226,7 @@ func (om *OrdersMonitor) getRemoteOrder(ctx context.Context, orderNumber string)
 		if err != nil {
 			switch {
 			case errors.Is(err, accrualsystem.ErrTooManyRequests):
-				timeToWait := om.accrualSystem.GetServiceAwakeTime().Sub(time.Now())
+				timeToWait := time.Until(om.accrualSystem.GetServiceAwakeTime())
 				select {
 				case <-ctx.Done():
 					return accrualsystemprotocol.Order{}, ctx.Err()

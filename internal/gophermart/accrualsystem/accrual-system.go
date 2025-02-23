@@ -27,8 +27,8 @@ type Config struct {
 
 type AccrualSystem struct {
 	logger                 *logging.ZapLogger
-	cfg                    Config
 	remoteServiceAwakeTime *threadsafe.Time
+	cfg                    Config
 }
 
 func NewAccrualSystem(cfg Config, logger *logging.ZapLogger) *AccrualSystem {
@@ -82,9 +82,7 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 		newRemoveServiceAwakeTime := time.Now().Add(retryAfter)
 		as.remoteServiceAwakeTime.SetIf(
 			newRemoveServiceAwakeTime,
-			func(current time.Time) bool {
-				return newRemoveServiceAwakeTime.After(current)
-			},
+			newRemoveServiceAwakeTime.After,
 		)
 		return accrualsystemprotocol.Order{}, ErrTooManyRequests
 	default:

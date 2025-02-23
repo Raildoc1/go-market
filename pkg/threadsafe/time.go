@@ -32,7 +32,7 @@ func (t *Time) Set(value time.Time) {
 func (t *Time) SetIf(value time.Time, condition func(current time.Time) bool) {
 	t.mux.Lock()
 	defer t.mux.Unlock()
-	if condition(value) {
+	if condition(t.time) {
 		t.time = value
 	}
 }

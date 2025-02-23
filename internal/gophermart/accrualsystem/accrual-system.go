@@ -8,6 +8,7 @@ import (
 	"go-market/internal/common/accrualsystemprotocol"
 	"go-market/pkg/logging"
 	"go-market/pkg/threadsafe"
+	"go-market/pkg/timeutils"
 	"net/http"
 	"strconv"
 	"time"
@@ -22,7 +23,8 @@ var (
 )
 
 type Config struct {
-	ServerAddress string
+	ServerAddress      string
+	retryAttemptDelays []time.Duration
 }
 
 type AccrualSystem struct {
@@ -88,4 +90,28 @@ func (as *AccrualSystem) GetOrderStatus(ctx context.Context, orderNumber string)
 	default:
 		return accrualsystemprotocol.Order{}, fmt.Errorf("unexpected status code %v", statusCode)
 	}
+}
+
+func (as *AccrualSystem) sendRequestWithRetry(ctx context.Context, orderNumber string) (*resty.Response, error) {
+	return timeutils.Retry[*resty.Response](
+		ctx,
+		as.cfg.retryAttemptDelays,
+		func(ctx context.Context) (*resty.Response, error) {
+			return as.getOrder(ctx, orderNumber)
+		},
+		func(response *resty.Response, err error) (needRetry bool) {
+			code := response.StatusCode()
+			return code == http.StatusGatewayTimeout || code == http.StatusServiceUnavailable
+		},
+	)
+}
+
+func (as *AccrualSystem) getOrder(ctx context.Context, orderNumber string) (*resty.Response, error) {
+	url := as.cfg.ServerAddress + "/api/orders/{number}"
+	return resty.
+		New().
+		R().
+		SetContext(ctx).
+		SetPathParam("number", orderNumber).
+		Get(url)
 }

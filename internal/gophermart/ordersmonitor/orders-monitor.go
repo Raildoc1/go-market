@@ -9,6 +9,7 @@ import (
 	"go-market/internal/gophermart/data"
 	"go-market/pkg/logging"
 	"go-market/pkg/threadsafe"
+	"go-market/pkg/timeutils"
 	"sync"
 	"time"
 
@@ -227,12 +228,11 @@ func (om *OrdersMonitor) getRemoteOrder(ctx context.Context, orderNumber string)
 			switch {
 			case errors.Is(err, accrualsystem.ErrTooManyRequests):
 				timeToWait := time.Until(om.accrualSystem.GetServiceAwakeTime())
-				select {
-				case <-ctx.Done():
-					return accrualsystemprotocol.Order{}, ctx.Err()
-				case <-time.After(timeToWait):
-					continue
+				err := timeutils.SleepCtx(ctx, timeToWait)
+				if err != nil {
+					return accrualsystemprotocol.Order{}, err
 				}
+				continue
 			default:
 				return accrualsystemprotocol.Order{}, err
 			}

@@ -21,3 +21,6 @@ vendor/
 # IDEs directories
 .idea
 .vscode
+
+# MacOS
+.DS_Store
